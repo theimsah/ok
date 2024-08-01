@@ -236,7 +236,7 @@ if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
           date: getCurrentDate()
       };
 
-      emailjs.send('service_7iuucrp', 'service_7iuucrp', templateParams)
+      emailjs.send('service_7iuucrp', 'template_ae3w2ni', templateParams)
           .then(function(response) {
               console.log('SUCCESS!', response.status, response.text);
           }, function(error) {
