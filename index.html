@@ -108,22 +108,13 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
 </head>
 <body>
-<script>
-import { getDatabase, ref, set } from "firebase/database";
-
-function writeUserData(userId, name, email, imageUrl) {
-  const db = getDatabase();
-  set(ref(db, 'users/' + userId), {
-    username: name,
-    email: email,
-    profile_picture : imageUrl
-  });
-}
-</script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
+        import Chart from "https://cdn.jsdelivr.net/npm/chart.js";
 
+        // Configuration Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDJhZSCb4X11Mp0cmqWQgu4Z2boEmyX9ps",
             authDomain: "mois1gagnant.firebaseapp.com",
@@ -134,68 +125,11 @@ function writeUserData(userId, name, email, imageUrl) {
             measurementId: "G-YJJLD8E2GD"
         };
 
+        // Initialiser Firebase
         const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
         const analytics = getAnalytics(app);
-    </script>
 
-    <!-- User Selection -->
-    <div id="user-selection">
-        <h1>Select User</h1>
-        <div class="user-list" id="userList"></div>
-        <button onclick="document.getElementById('add-user-container').style.display = 'block';">Add User</button>
-    </div>
-
-    <!-- Add User -->
-    <div id="add-user-container">
-        <h1>Add User</h1>
-        <div class="form-group">
-            <label for="userName">User Name:</label>
-            <input type="text" id="userName">
-        </div>
-        <button onclick="addUser()">Add</button>
-        <button onclick="document.getElementById('add-user-container').style.display = 'none';">Cancel</button>
-    </div>
-
-    <!-- Tracker Container -->
-    <div id="tracker-container" class="container">
-        <h1>Daily Activity Tracker</h1>
-        <div class="result" id="result">Total Points: 0</div>
-        <div class="form-group">
-            <label for="sportHours">Sport (hours):</label>
-            <input type="number" id="sportHours" min="0" step="1">
-        </div>
-        <div class="form-group">
-            <label for="revisionHours">Revision (hours):</label>
-            <input type="number" id="revisionHours" min="0" step="1">
-        </div>
-        <div class="form-group">
-            <label for="travailHours">Travail (hours):</label>
-            <input type="number" id="travailHours" min="0" step="1">
-        </div>
-        <div class="form-group">
-            <label for="pratiqueReligieuse">Pratique religieuse:</label>
-            <input type="checkbox" id="pratiqueReligieuse">
-        </div>
-        <div class="form-group">
-            <label for="lectureHours">Lecture (hours):</label>
-            <input type="number" id="lectureHours" min="0" step="1">
-        </div>
-        <div class="form-group">
-            <label for="alimentationSaine">Alimentation saine:</label>
-            <input type="checkbox" id="alimentationSaine">
-        </div>
-        <button onclick="submitDailyData()">Submit</button>
-        <button class="undo-button" onclick="undoLastSubmission()">&#8592;</button>
-        <button onclick="showChart()">Show Chart</button>
-        <div class="points-earned" id="points-earned">0 points</div>
-        <div class="jour" id="jour">Jour: 0</div>
-        <div id="chart-container" style="display:none;">
-            <canvas id="chart"></canvas>
-        </div>
-        <button onclick="logout()">Logout</button>
-    </div>
-
-    <script>
         let currentUser = null;
         let totalPoints = 0;
         let dailyPointsHistory = [];
@@ -203,24 +137,12 @@ function writeUserData(userId, name, email, imageUrl) {
         let undoClickCount = 0;
         let chart = null;
 
-        function loadUserData() {
-            const storedUsers = localStorage.getItem('users');
-            if (!storedUsers) {
-                localStorage.setItem('users', JSON.stringify({}));
-            }
-            updateUserList();
-        }
-
-        function updateUserList() {
-            const users = JSON.parse(localStorage.getItem('users'));
-            const userList = document.getElementById('userList');
-            userList.innerHTML = '';
-            for (const user in users) {
-                const userButton = document.createElement('button');
-                userButton.textContent = user;
-                userButton.onclick = () => selectUser(user);
-                userList.appendChild(userButton);
-            }
+        function writeUserData(userId, name, email, imageUrl) {
+            set(ref(db, 'users/' + userId), {
+                username: name,
+                email: email,
+                profile_picture: imageUrl
+            });
         }
 
         function addUser() {
@@ -230,17 +152,38 @@ function writeUserData(userId, name, email, imageUrl) {
                 return;
             }
 
-            const users = JSON.parse(localStorage.getItem('users'));
-            if (users[userName]) {
-                alert('User already exists.');
-                return;
-            }
+            const userRef = ref(db, 'users/' + userName);
+            set(userRef, {
+                username: userName,
+                email: '', // Ajoutez des valeurs si nécessaire
+                profile_picture: '' // Ajoutez des valeurs si nécessaire
+            }).then(() => {
+                alert('User added successfully!');
+                updateUserList();
+                document.getElementById('userName').value = '';
+                document.getElementById('add-user-container').style.display = 'none';
+            }).catch((error) => {
+                console.error('Error adding user:', error);
+            });
+        }
 
-            users[userName] = { totalPoints: 0, dailyPointsHistory: [], submitCount: 0, undoClickCount: 0 };
-            localStorage.setItem('users', JSON.stringify(users));
-            updateUserList();
-            document.getElementById('userName').value = '';
-            document.getElementById('add-user-container').style.display = 'none';
+        function loadUserData() {
+            const usersRef = ref(db, 'users');
+            onValue(usersRef, (snapshot) => {
+                const users = snapshot.val() || {};
+                updateUserList(users);
+            });
+        }
+
+        function updateUserList(users) {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            for (const userId in users) {
+                const userButton = document.createElement('button');
+                userButton.textContent = userId;
+                userButton.onclick = () => selectUser(userId);
+                userList.appendChild(userButton);
+            }
         }
 
         function selectUser(user) {
@@ -251,21 +194,30 @@ function writeUserData(userId, name, email, imageUrl) {
         }
 
         function loadUserSpecificData() {
-            const users = JSON.parse(localStorage.getItem('users'));
-            const userData = users[currentUser];
-            totalPoints = userData.totalPoints;
-            dailyPointsHistory = userData.dailyPointsHistory;
-            submitCount = userData.submitCount;
-            undoClickCount = userData.undoClickCount;
-            updateDisplay();
-            destroyChart(); // Assurez-vous de détruire le graphique précédent
-            createOrUpdateChart(); // Créez un nouveau graphique
+            const userRef = ref(db, 'users/' + currentUser);
+            onValue(userRef, (snapshot) => {
+                const userData = snapshot.val() || {};
+                totalPoints = userData.totalPoints || 0;
+                dailyPointsHistory = userData.dailyPointsHistory || [];
+                submitCount = userData.submitCount || 0;
+                undoClickCount = userData.undoClickCount || 0;
+                updateDisplay();
+                destroyChart();
+                createOrUpdateChart();
+            });
         }
 
         function updateUserSpecificData() {
-            const users = JSON.parse(localStorage.getItem('users'));
-            users[currentUser] = { totalPoints, dailyPointsHistory, submitCount, undoClickCount };
-            localStorage.setItem('users', JSON.stringify(users));
+            const userRef = ref(db, 'users/' + currentUser);
+            set(userRef, {
+                username: currentUser,
+                totalPoints,
+                dailyPointsHistory,
+                submitCount,
+                undoClickCount
+            }).catch((error) => {
+                console.error('Error updating user data:', error);
+            });
         }
 
         function updateDisplay() {
@@ -305,114 +257,123 @@ function writeUserData(userId, name, email, imageUrl) {
             updateDisplay();
             updateUserSpecificData();
             createOrUpdateChart();
+            document.getElementById('tracker-container').style.display = 'none';
+            document.getElementById('user-selection').style.display = 'block';
         }
 
-        function undoLastSubmission() {
-            undoClickCount += 1;
-            if (undoClickCount >= 3) {
-                const userInput = prompt("Souhaitez-vous continuer à revenir en arrière ? Entrez le numéro de téléphone de l'administrateur du site.");
-                if (userInput === '0766209786') {
-                    undoClickCount = 0; // Réinitialiser le compteur si le code est correct
-                } else {
-                    undoClickCount -= 1; // Réinitialiser le compteur si le code n'est pas correct
-                    return;
-                }
-            }
-
-            if (dailyPointsHistory.length === 0) {
-                alert("Aucune soumission précédente à annuler.");
-                undoClickCount = 0; // Réinitialiser le compteur si aucune soumission n'existe
-                return;
-            }
-
-            const lastPoints = dailyPointsHistory.pop();
-            totalPoints -= lastPoints;
-            submitCount -= 1;
-            if (submitCount < 0) submitCount = 0; // Prévenir les valeurs négatives du compteur
-            updateDisplay();
-            updateUserSpecificData();
-            createOrUpdateChart();
-        }
-
-        function showChart() {
-            const chartContainer = document.getElementById('chart-container');
-            chartContainer.style.display = chartContainer.style.display === 'none' ? 'block' : 'none';
-
-            if (chartContainer.style.display === 'block') {
+        function undo() {
+            if (dailyPointsHistory.length > 0) {
+                dailyPointsHistory.pop();
+                totalPoints = dailyPointsHistory.reduce((sum, points) => sum + points, 0);
+                undoClickCount += 1;
+                updateDisplay();
+                updateUserSpecificData();
+                destroyChart();
                 createOrUpdateChart();
-            } else if (chart) {
-                chart.destroy(); // Détruire le graphique lorsque le conteneur est masqué
             }
         }
 
         function destroyChart() {
             if (chart) {
                 chart.destroy();
-                chart = null;
             }
         }
 
         function createOrUpdateChart() {
             const ctx = document.getElementById('chart').getContext('2d');
-
-            if (chart) {
-                chart.data.labels = Array.from({ length: dailyPointsHistory.length }, (_, i) => `Jour ${i + 1}`);
-                chart.data.datasets[0].data = dailyPointsHistory;
-                chart.update(); // Mettre à jour le graphique existant
-            } else {
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: Array.from({ length: dailyPointsHistory.length }, (_, i) => `Jour ${i + 1}`),
-                        datasets: [{
-                            label: 'Points',
-                            data: dailyPointsHistory,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            fill: true,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: true,
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        if (context.parsed.y !== null) {
-                                            label += context.parsed.y + ' points';
-                                        }
-                                        return label;
-                                    }
-                                }
-                            }
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dailyPointsHistory.map((_, index) => `Jour ${index + 1}`),
+                    datasets: [{
+                        label: 'Points quotidiens',
+                        data: dailyPointsHistory,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        },
+                        y: {
+                            beginAtZero: true
                         }
                     }
-                });
-            }
+                }
+            });
         }
 
-        function logout() {
-            currentUser = null;
-            totalPoints = 0;
-            dailyPointsHistory = [];
-            submitCount = 0;
-            undoClickCount = 0;
-            destroyChart(); // Détruire le graphique pour éviter les fuites de mémoire
-            document.getElementById('tracker-container').style.display = 'none';
-            document.getElementById('user-selection').style.display = 'block';
-            document.getElementById('add-user-container').style.display = 'none';
-            document.getElementById('userName').value = ''; // Réinitialiser le champ de texte
-            updateUserList(); // Réafficher la liste des utilisateurs pour être sûr
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('submit-button').addEventListener('click', submitDailyData);
+            document.getElementById('undo-button').addEventListener('click', undo);
+            document.getElementById('add-user-button').addEventListener('click', () => {
+                document.getElementById('add-user-container').style.display = 'block';
+            });
+            document.getElementById('save-user-button').addEventListener('click', addUser);
 
-        window.onload = loadUserData;
+            loadUserData();
+        });
     </script>
+    <div class="container">
+        <div id="user-selection">
+            <h1>Select User</h1>
+            <div id="userList" class="user-list">
+                <!-- Liste des utilisateurs sera remplie ici -->
+            </div>
+            <button id="add-user-button">Add User</button>
+        </div>
+        <div id="add-user-container">
+            <h2>Add New User</h2>
+            <div class="form-group">
+                <label for="userName">User Name</label>
+                <input type="text" id="userName" placeholder="Enter user name">
+            </div>
+            <button id="save-user-button">Save User</button>
+        </div>
+        <div id="tracker-container">
+            <h1>Daily Activity Tracker</h1>
+            <div class="form-group">
+                <label for="sportHours">Hours of Sport</label>
+                <input type="number" id="sportHours" placeholder="Enter hours">
+            </div>
+            <div class="form-group">
+                <label for="revisionHours">Hours of Revision</label>
+                <input type="number" id="revisionHours" placeholder="Enter hours">
+            </div>
+            <div class="form-group">
+                <label for="travailHours">Hours of Work</label>
+                <input type="number" id="travailHours" placeholder="Enter hours">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="pratiqueReligieuse">
+                    Pratique Religieuse
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="lectureHours">Hours of Reading</label>
+                <input type="number" id="lectureHours" placeholder="Enter hours">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="alimentationSaine">
+                    Healthy Eating
+                </label>
+            </div>
+            <button id="submit-button">Submit</button>
+            <button id="undo-button" class="undo-button">Undo</button>
+            <div class="result" id="result">Total Points: 0</div>
+            <div class="points-earned" id="points-earned">Points Earned Today: 0</div>
+            <div class="jour" id="jour">Jour: 0</div>
+            <div id="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
