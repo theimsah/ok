@@ -109,7 +109,7 @@
 </head>
 <body>
 
-    set(import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, ref, set } from "firebase/database";
 
 function writeUserData(userId, name, email, imageUrl) {
   const db = getDatabase();
@@ -118,7 +118,7 @@ function writeUserData(userId, name, email, imageUrl) {
     email: email,
     profile_picture : imageUrl
   });
-})
+}
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
