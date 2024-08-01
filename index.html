@@ -123,6 +123,52 @@
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
 </script>
+
+
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
+
+    <script src="bower_components/firebaseui/dist/firebaseui.js"></script>
+<link type="text/css" rel="stylesheet" href="bower_components/firebaseui/dist/firebaseui.css" />
+    <script>
+        // Initialize the FirebaseUI Widget using Firebase.
+var ui = new firebaseui.auth.AuthUI(firebase.auth());
+    </script>
+
+    <script>
+        ui.start('#firebaseui-auth-container', {
+  signInOptions: [
+    firebase.auth.EmailAuthProvider.PROVIDER_ID
+  ],
+  // Other config options...
+});
+    </script>
+
+
+    <script>
+        ui.start('#firebaseui-auth-container', {
+  signInOptions: [
+    {
+      provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+      signInMethod: firebase.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD
+    }
+  ],
+  // Other config options...
+});
+    </script>
+
+    <script>
+        // Is there an email link sign-in?
+if (ui.isPendingRedirect()) {
+  ui.start('#firebaseui-auth-container', uiConfig);
+}
+// This can also be done via:
+if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
+  ui.start('#firebaseui-auth-container', uiConfig);
+}
+    </script>
+
+
     
 </head>
 <body>
