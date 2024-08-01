@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Activity Tracker</title>
+
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -172,6 +175,119 @@ if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
     
 </head>
 <body>
+
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxfmUBbqex6T59BhFrxepcfmPCpDc7owE",
+    authDomain: "first-78560.firebaseapp.com",
+    projectId: "first-78560",
+    storageBucket: "first-78560.appspot.com",
+    messagingSenderId: "825740794387",
+    appId: "1:825740794387:web:938e4b9476e21d4d1dfde6"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  // Initialize EmailJS
+  (function(){
+      emailjs.init("imoudal.hassan@hotmail.com");  // Replace with your EmailJS user ID
+  })();
+
+  // Function to get current date
+  function getCurrentDate() {
+      return new Date().toLocaleDateString();
+  }
+
+  // Function to load the last submission date from local storage
+  function loadLastSubmissionDate() {
+      return localStorage.getItem('lastSubmissionDate');
+  }
+
+  // Function to save the last submission date to local storage
+  function saveLastSubmissionDate(date) {
+      localStorage.setItem('lastSubmissionDate', date);
+  }
+
+  // Function to calculate points based on user input
+  function calculatePoints() {
+      const sportHours = parseInt(document.getElementById('sportHours').value) || 0;
+      const revisionHours = parseInt(document.getElementById('revisionHours').value) || 0;
+      const travailHours = parseInt(document.getElementById('travailHours').value) || 0;
+      const pratiqueReligieuse = document.getElementById('pratiqueReligieuse').checked ? 1 : 0;
+      const lectureHours = parseInt(document.getElementById('lectureHours').value) || 0;
+      const alimentationSaine = document.getElementById('alimentationSaine').checked ? 1 : 0;
+
+      const totalPoints = (sportHours * 10) + (revisionHours * 7) + (travailHours * 4) + (pratiqueReligieuse * 20) + (lectureHours * 5) + (alimentationSaine * 10);
+      return totalPoints;
+  }
+
+  // Function to send email using EmailJS
+  function sendEmail(points) {
+      const userInitial = currentUser.charAt(0).toLowerCase();
+      const emailToSend = `tracker+${userInitial}@example.com`;  // Format of the email address
+
+      const templateParams = {
+          to_email: 'imoudal.hassan@hotmail.com',
+          points: points,
+          date: getCurrentDate()
+      };
+
+      emailjs.send('service_7iuucrp', 'service_7iuucrp', templateParams)
+          .then(function(response) {
+              console.log('SUCCESS!', response.status, response.text);
+          }, function(error) {
+              console.log('FAILED...', error);
+          });
+  }
+
+  // Function to submit daily data and check date change
+  function submitDailyData() {
+      submitCount += 1;
+      undoClickCount = 0;
+      const sportHours = parseInt(document.getElementById('sportHours').value) || 0;
+      const revisionHours = parseInt(document.getElementById('revisionHours').value) || 0;
+      const travailHours = parseInt(document.getElementById('travailHours').value) || 0;
+      const pratiqueReligieuse = document.getElementById('pratiqueReligieuse').checked;
+      const lectureHours = parseInt(document.getElementById('lectureHours').value) || 0;
+      const alimentationSaine = document.getElementById('alimentationSaine').checked;
+
+      let dailyPoints = 0;
+
+      if (!pratiqueReligieuse) {
+          alert("Pratique religieuse non accomplie. Total des points pour la journée est 0.");
+          dailyPoints = 0;
+      } else {
+          dailyPoints += sportHours * 10;
+          dailyPoints += revisionHours * 7;
+          dailyPoints += travailHours * 4;
+          dailyPoints += 20; // Points pour pratique religieuse
+          dailyPoints += lectureHours * 5;
+          if (alimentationSaine) {
+              dailyPoints += 10;
+          }
+      }
+
+      dailyPointsHistory.push(dailyPoints);
+      totalPoints += dailyPoints;
+      updateDisplay();
+      updateUserSpecificData();
+      createOrUpdateChart();
+
+      // Check if the date has changed and send email
+      const currentDate = getCurrentDate();
+      const lastSubmissionDate = loadLastSubmissionDate();
+      if (lastSubmissionDate !== currentDate) {
+          sendEmail(dailyPoints);
+          saveLastSubmissionDate(currentDate);
+      }
+  }
+</script>
+
+    
     <!-- User Selection -->
     <div id="user-selection">
         <h1>Select User</h1>
