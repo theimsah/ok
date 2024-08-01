@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Activity Tracker</title>
 
-    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -104,188 +102,9 @@
             margin: 5px 0;
         }
     </style>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBxfmUBbqex6T59BhFrxepcfmPCpDc7owE",
-    authDomain: "first-78560.firebaseapp.com",
-    projectId: "first-78560",
-    storageBucket: "first-78560.appspot.com",
-    messagingSenderId: "825740794387",
-    appId: "1:825740794387:web:938e4b9476e21d4d1dfde6"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-
-
-    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
-<link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
-
-    <script src="bower_components/firebaseui/dist/firebaseui.js"></script>
-<link type="text/css" rel="stylesheet" href="bower_components/firebaseui/dist/firebaseui.css" />
-    <script>
-        // Initialize the FirebaseUI Widget using Firebase.
-var ui = new firebaseui.auth.AuthUI(firebase.auth());
-    </script>
-
-    <script>
-        ui.start('#firebaseui-auth-container', {
-  signInOptions: [
-    firebase.auth.EmailAuthProvider.PROVIDER_ID
-  ],
-  // Other config options...
-});
-    </script>
-
-
-    <script>
-        ui.start('#firebaseui-auth-container', {
-  signInOptions: [
-    {
-      provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
-      signInMethod: firebase.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD
-    }
-  ],
-  // Other config options...
-});
-    </script>
-
-    <script>
-        // Is there an email link sign-in?
-if (ui.isPendingRedirect()) {
-  ui.start('#firebaseui-auth-container', uiConfig);
-}
-// This can also be done via:
-if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
-  ui.start('#firebaseui-auth-container', uiConfig);
-}
-    </script>
-
-
-    
 </head>
 <body>
 
-    <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBxfmUBbqex6T59BhFrxepcfmPCpDc7owE",
-    authDomain: "first-78560.firebaseapp.com",
-    projectId: "first-78560",
-    storageBucket: "first-78560.appspot.com",
-    messagingSenderId: "825740794387",
-    appId: "1:825740794387:web:938e4b9476e21d4d1dfde6"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
-
-  // Initialize EmailJS
-  (function(){
-      emailjs.init("Hassan");  // Replace with your EmailJS user ID
-  })();
-
-  // Function to get current date
-  function getCurrentDate() {
-      return new Date().toLocaleDateString();
-  }
-
-  // Function to load the last submission date from local storage
-  function loadLastSubmissionDate() {
-      return localStorage.getItem('lastSubmissionDate');
-  }
-
-  // Function to save the last submission date to local storage
-  function saveLastSubmissionDate(date) {
-      localStorage.setItem('lastSubmissionDate', date);
-  }
-
-  // Function to calculate points based on user input
-  function calculatePoints() {
-      const sportHours = parseInt(document.getElementById('sportHours').value) || 0;
-      const revisionHours = parseInt(document.getElementById('revisionHours').value) || 0;
-      const travailHours = parseInt(document.getElementById('travailHours').value) || 0;
-      const pratiqueReligieuse = document.getElementById('pratiqueReligieuse').checked ? 1 : 0;
-      const lectureHours = parseInt(document.getElementById('lectureHours').value) || 0;
-      const alimentationSaine = document.getElementById('alimentationSaine').checked ? 1 : 0;
-
-      const totalPoints = (sportHours * 10) + (revisionHours * 7) + (travailHours * 4) + (pratiqueReligieuse * 20) + (lectureHours * 5) + (alimentationSaine * 10);
-      return totalPoints;
-  }
-
-  // Function to send email using EmailJS
-  function sendEmail(points) {
-    const templateParams = {
-        to_email: 'imoudal.hassan@hotmail.com', // L'adresse du destinataire
-        points: points, // Points calculés
-        date: getCurrentDate() // Date actuelle
-    };
-
-    emailjs.send('service_7iuucrp', 'template_ae3w2ni', templateParams)
-        .then(function(response) {
-            console.log('SUCCESS!', response.status, response.text);
-        }, function(error) {
-            console.log('FAILED...', error);
-        });
-}
-
-
-  // Function to submit daily data and check date change
-  function submitDailyData() {
-      submitCount += 1;
-      undoClickCount = 0;
-      const sportHours = parseInt(document.getElementById('sportHours').value) || 0;
-      const revisionHours = parseInt(document.getElementById('revisionHours').value) || 0;
-      const travailHours = parseInt(document.getElementById('travailHours').value) || 0;
-      const pratiqueReligieuse = document.getElementById('pratiqueReligieuse').checked;
-      const lectureHours = parseInt(document.getElementById('lectureHours').value) || 0;
-      const alimentationSaine = document.getElementById('alimentationSaine').checked;
-
-      let dailyPoints = 0;
-
-      if (!pratiqueReligieuse) {
-          alert("Pratique religieuse non accomplie. Total des points pour la journée est 0.");
-          dailyPoints = 0;
-      } else {
-          dailyPoints += sportHours * 10;
-          dailyPoints += revisionHours * 7;
-          dailyPoints += travailHours * 4;
-          dailyPoints += 20; // Points pour pratique religieuse
-          dailyPoints += lectureHours * 5;
-          if (alimentationSaine) {
-              dailyPoints += 10;
-          }
-      }
-
-      dailyPointsHistory.push(dailyPoints);
-      totalPoints += dailyPoints;
-      updateDisplay();
-      updateUserSpecificData();
-      createOrUpdateChart();
-
-      // Check if the date has changed and send email
-      const currentDate = getCurrentDate();
-      const lastSubmissionDate = loadLastSubmissionDate();
-      if (lastSubmissionDate !== currentDate) {
-          sendEmail(dailyPoints);
-          saveLastSubmissionDate(currentDate);
-      }
-  }
-</script>
-
-    
     <!-- User Selection -->
     <div id="user-selection">
         <h1>Select User</h1>
@@ -432,64 +251,78 @@ if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
             const lectureHours = parseInt(document.getElementById('lectureHours').value) || 0;
             const alimentationSaine = document.getElementById('alimentationSaine').checked;
 
-            let dailyPoints = 0;
+            let points = 0;
+            points += sportHours * 1;
+            points += revisionHours * 2;
+            points += travailHours * 3;
+            if (pratiqueReligieuse) points += 5;
+            points += lectureHours * 1;
+            if (alimentationSaine) points += 4;
 
-            if (!pratiqueReligieuse) {
-                alert("Pratique religieuse non accomplie. Total des points pour la journée est 0.");
-                dailyPoints = 0;
-            } else {
-                dailyPoints += sportHours * 10;
-                dailyPoints += revisionHours * 7;
-                dailyPoints += travailHours * 4;
-                dailyPoints += 20; // Points pour pratique religieuse
-                dailyPoints += lectureHours * 5;
-                if (alimentationSaine) {
-                    dailyPoints += 10;
-                }
-            }
+            totalPoints += points;
+            dailyPointsHistory.push(points);
 
-            dailyPointsHistory.push(dailyPoints);
-            totalPoints += dailyPoints;
-            updateDisplay();
+            document.getElementById('sportHours').value = '';
+            document.getElementById('revisionHours').value = '';
+            document.getElementById('travailHours').value = '';
+            document.getElementById('pratiqueReligieuse').checked = false;
+            document.getElementById('lectureHours').value = '';
+            document.getElementById('alimentationSaine').checked = false;
+
             updateUserSpecificData();
-            createOrUpdateChart();
+            updateDisplay();
+            destroyChart(); // Assurez-vous de détruire le graphique précédent
+            createOrUpdateChart(); // Créez un nouveau graphique
         }
 
         function undoLastSubmission() {
-            undoClickCount += 1;
-            if (undoClickCount >= 3) {
-                const userInput = prompt("Souhaitez-vous continuer à revenir en arrière ? Entrez le numéro de téléphone de l'administrateur du site.");
-                if (userInput === '0766209786') {
-                    undoClickCount = 0; // Réinitialiser le compteur si le code est correct
-                } else {
-                    undoClickCount -= 1; // Réinitialiser le compteur si le code n'est pas correct
-                    return;
-                }
-            }
-
-            if (dailyPointsHistory.length === 0) {
-                alert("Aucune soumission précédente à annuler.");
-                undoClickCount = 0; // Réinitialiser le compteur si aucune soumission n'existe
-                return;
-            }
-
-            const lastPoints = dailyPointsHistory.pop();
-            totalPoints -= lastPoints;
+            if (dailyPointsHistory.length === 0) return;
+            dailyPointsHistory.pop();
+            totalPoints = dailyPointsHistory.reduce((a, b) => a + b, 0);
             submitCount -= 1;
-            if (submitCount < 0) submitCount = 0; // Prévenir les valeurs négatives du compteur
-            updateDisplay();
+            undoClickCount += 1;
             updateUserSpecificData();
-            createOrUpdateChart();
+            updateDisplay();
+            destroyChart(); // Assurez-vous de détruire le graphique précédent
+            createOrUpdateChart(); // Créez un nouveau graphique
         }
 
-        function showChart() {
-            const chartContainer = document.getElementById('chart-container');
-            chartContainer.style.display = chartContainer.style.display === 'none' ? 'block' : 'none';
-
-            if (chartContainer.style.display === 'block') {
-                createOrUpdateChart();
-            } else if (chart) {
-                chart.destroy(); // Détruire le graphique lorsque le conteneur est masqué
+        function createOrUpdateChart() {
+            const ctx = document.getElementById('chart').getContext('2d');
+            if (chart) {
+                chart.data.labels = dailyPointsHistory.map((_, index) => `Jour ${index + 1}`);
+                chart.data.datasets[0].data = dailyPointsHistory;
+                chart.update();
+            } else {
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dailyPointsHistory.map((_, index) => `Jour ${index + 1}`),
+                        datasets: [{
+                            label: 'Points Earned',
+                            data: dailyPointsHistory,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Days'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Points'
+                                }
+                            }
+                        }
+                    }
+                });
             }
         }
 
@@ -500,50 +333,9 @@ if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
             }
         }
 
-        function createOrUpdateChart() {
-            const ctx = document.getElementById('chart').getContext('2d');
-
-            if (chart) {
-                chart.data.labels = Array.from({ length: dailyPointsHistory.length }, (_, i) => `Jour ${i + 1}`);
-                chart.data.datasets[0].data = dailyPointsHistory;
-                chart.update(); // Mettre à jour le graphique existant
-            } else {
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: Array.from({ length: dailyPointsHistory.length }, (_, i) => `Jour ${i + 1}`),
-                        datasets: [{
-                            label: 'Points',
-                            data: dailyPointsHistory,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            fill: true,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: true,
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        if (context.parsed.y !== null) {
-                                            label += context.parsed.y + ' points';
-                                        }
-                                        return label;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
+        function showChart() {
+            document.getElementById('chart-container').style.display = 'block';
+            createOrUpdateChart();
         }
 
         function logout() {
@@ -552,15 +344,13 @@ if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
             dailyPointsHistory = [];
             submitCount = 0;
             undoClickCount = 0;
-            destroyChart(); // Détruire le graphique pour éviter les fuites de mémoire
             document.getElementById('tracker-container').style.display = 'none';
             document.getElementById('user-selection').style.display = 'block';
-            document.getElementById('add-user-container').style.display = 'none';
-            document.getElementById('userName').value = ''; // Réinitialiser le champ de texte
-            updateUserList(); // Réafficher la liste des utilisateurs pour être sûr
+            destroyChart(); // Assurez-vous de détruire le graphique précédent
         }
 
-        window.onload = loadUserData;
+        document.addEventListener('DOMContentLoaded', loadUserData);
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
