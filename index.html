@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Activity Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="number"], input[type="checkbox"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        input[type="checkbox"] {
+            width: auto;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .undo-button {
+            width: auto;
+            padding: 5px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: inline-block;
+            text-align: center;
+        }
+        .undo-button:hover {
+            background: #0056b3;
+        }
+        .result, .points-earned, .jour {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .result {
+            font-size: 24px;
+        }
+        .points-earned {
+            font-size: 20px;
+        }
+        .jour {
+            font-size: 20px;
+        }
+        #chart-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #chart {
+            max-width: 100%;
+            height: 400px;
+        }
+        #user-selection, #tracker-container, #add-user-container {
+            display: none;
+        }
+        #user-selection {
+            display: block;
+        }
+        .user-list button {
+            display: block;
+            margin: 5px 0;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase App (SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <!-- Firebase Realtime Database (SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+</head>
+<body>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJhZSCb4X11Mp0cmqWQgu4Z2boEmyX9ps",
+            authDomain: "mois1gagnant.firebaseapp.com",
+            projectId: "mois1gagnant",
+            storageBucket: "mois1gagnant.appspot.com",
+            messagingSenderId: "196066005100",
+            appId: "1:196066005100:web:59658778bbbdba6e6ac849",
+            measurementId: "G-YJJLD8E2GD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
+
+    <!-- User Selection -->
+    <div id="user-selection">
+        <h1>Select User</h1>
+        <div class="user-list" id="userList"></div>
+        <button onclick="document.getElementById('add-user-container').style.display = 'block';">Add User</button>
+    </div>
+
+    <!-- Add User -->
+    <div id="add-user-container">
+        <h1>Add User</h1>
+        <div class="form-group">
+            <label for="userName">User Name:</label>
+            <input type="text" id="userName">
+        </div>
+        <button onclick="addUser()">Add</button>
+        <button onclick="document.getElementById('add-user-container').style.display = 'none';">Cancel</button>
+    </div>
+
+    <!-- Tracker Container -->
+    <div id="tracker-container" class="container">
+        <h1>Daily Activity Tracker</h1>
+        <div class="result" id="result">Total Points: 0</div>
+        <div class="form-group">
+            <label for="sportHours">Sport (hours):</label>
+            <input type="number" id="sportHours" min="0" step="1">
+        </div>
+        <div class="form-group">
+            <label for="revisionHours">Revision (hours):</label>
+            <input type="number" id="revisionHours" min="0" step="1">
+        </div>
+        <div class="form-group">
+            <label for="travailHours">Travail (hours):</label>
+            <input type="number" id="travailHours" min="0" step="1">
+        </div>
+        <div class="form-group">
+            <label for="pratiqueReligieuse">Pratique religieuse:</label>
+            <input type="checkbox" id="pratiqueReligieuse">
+        </div>
+        <div class="form-group">
+            <label for="lectureHours">Lecture (hours):</label>
+            <input type="number" id="lectureHours" min="0" step="1">
+        </div>
+        <div class="form-group">
+            <label for="alimentationSaine">Alimentation saine:</label>
+            <input type="checkbox" id="alimentationSaine">
+        </div>
+        <button onclick="submitDailyData()">Submit</button>
+        <button class="undo-button" onclick="undoLastSubmission()">&#8592;</button>
+        <button onclick="showChart()">Show Chart</button>
+        <div class="points-earned" id="points-earned">0 points</div>
+        <div class="jour" id="jour">Jour: 0</div>
+        <div id="chart-container" style="display:none;">
+            <canvas id="chart"></canvas>
+        </div>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let totalPoints = 0;
+        let dailyPointsHistory = [];
+        let submitCount = 0;
+        let undoClickCount = 0;
+        let chart = null;
+
+        function loadUserData() {
+            const storedUsers = localStorage.getItem('users');
+            if (!storedUsers) {
+                localStorage.setItem('users', JSON.stringify({}));
+            }
+            updateUserList();
+        }
+
+        function updateUserList() {
+            const users = JSON.parse(localStorage.getItem('users'));
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            for (const user in users) {
+                const userButton = document.createElement('button');
+                userButton.textContent = user;
+                userButton.onclick = () => selectUser(user);
+                userList.appendChild(userButton);
+            }
+        }
+
+        function addUser() {
+            const userName = document.getElementById('userName').value.trim();
+            if (!userName) {
+                alert('Please enter a user name.');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users'));
+            if (users[userName]) {
+                alert('User already exists.');
+                return;
+            }
+
+            users[userName] = { totalPoints: 0, dailyPointsHistory: [], submitCount: 0, undoClickCount: 0 };
+            localStorage.setItem('users', JSON.stringify(users));
+            updateUserList();
+            document.getElementById('userName').value = '';
+            document.getElementById('add-user-container').style.display = 'none';
+        }
+
+        function selectUser(user) {
+            currentUser = user;
+            document.getElementById('user-selection').style.display = 'none';
+            document.getElementById('tracker-container').style.display = 'block';
+            loadUserSpecificData();
+        }
+
+        function loadUserSpecificData() {
+            const users = JSON.parse(localStorage.getItem('users'));
+            const userData = users[currentUser];
+            totalPoints = userData.totalPoints;
+            dailyPointsHistory = userData.dailyPointsHistory;
+            submitCount = userData.submitCount;
+            undoClickCount = userData.undoClickCount;
+            updateDisplay();
+            destroyChart(); // Assurez-vous de détruire le graphique précédent
+            createOrUpdateChart(); // Créez un nouveau graphique
+        }
+
+        function updateUserSpecificData() {
+            const users = JSON.parse(localStorage.getItem('users'));
+            users[currentUser] = { totalPoints, dailyPointsHistory, submitCount, undoClickCount };
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
+        function updateDisplay() {
+            document.getElementById('result').textContent = `Total Points: ${totalPoints}`;
+            document.getElementById('points-earned').textContent = `${dailyPointsHistory[dailyPointsHistory.length - 1] || 0} points`;
+            document.getElementById('jour').textContent = `Jour: ${submitCount}`;
+        }
+
+        function submitDailyData() {
+            submitCount += 1;
+            undoClickCount = 0;
+            const sportHours = parseInt(document.getElementById('sportHours').value) || 0;
+            const revisionHours = parseInt(document.getElementById('revisionHours').value) || 0;
+            const travailHours = parseInt(document.getElementById('travailHours').value) || 0;
+            const pratiqueReligieuse = document.getElementById('pratiqueReligieuse').checked;
+            const lectureHours = parseInt(document.getElementById('lectureHours').value) || 0;
+            const alimentationSaine = document.getElementById('alimentationSaine').checked;
+
+            let dailyPoints = 0;
+
+            if (!pratiqueReligieuse) {
+                alert("Pratique religieuse non accomplie. Total des points pour la journée est 0.");
+                dailyPoints = 0;
+            } else {
+                dailyPoints += sportHours * 10;
+                dailyPoints += revisionHours * 7;
+                dailyPoints += travailHours * 4;
+                dailyPoints += 20; // Points pour pratique religieuse
+                dailyPoints += lectureHours * 5;
+                if (alimentationSaine) {
+                    dailyPoints += 10;
+                }
+            }
+
+            dailyPointsHistory.push(dailyPoints);
+            totalPoints += dailyPoints;
+            updateDisplay();
+            updateUserSpecificData();
+            createOrUpdateChart();
+        }
+
+        function undoLastSubmission() {
+            undoClickCount += 1;
+            if (undoClickCount >= 3) {
+                const userInput = prompt("Souhaitez-vous continuer à revenir en arrière ? Entrez le numéro de téléphone de l'administrateur du site.");
+                if (userInput === '0766209786') {
+                    undoClickCount = 0; // Réinitialiser le compteur si le code est correct
+                } else {
+                    undoClickCount -= 1; // Réinitialiser le compteur si le code n'est pas correct
+                    return;
+                }
+            }
+
+            if (dailyPointsHistory.length === 0) {
+                alert("Aucune soumission précédente à annuler.");
+                undoClickCount = 0; // Réinitialiser le compteur si aucune soumission n'existe
+                return;
+            }
+
+            const lastPoints = dailyPointsHistory.pop();
+            totalPoints -= lastPoints;
+            submitCount -= 1;
+            if (submitCount < 0) submitCount = 0; // Prévenir les valeurs négatives du compteur
+            updateDisplay();
+            updateUserSpecificData();
+            createOrUpdateChart();
+        }
+
+        function showChart() {
+            const chartContainer = document.getElementById('chart-container');
+            chartContainer.style.display = chartContainer.style.display === 'none' ? 'block' : 'none';
+
+            if (chartContainer.style.display === 'block') {
+                createOrUpdateChart();
+            } else if (chart) {
+                chart.destroy(); // Détruire le graphique lorsque le conteneur est masqué
+            }
+        }
+
+        function destroyChart() {
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+        }
+
+        function createOrUpdateChart() {
+            const ctx = document.getElementById('chart').getContext('2d');
+
+            if (chart) {
+                chart.data.labels = Array.from({ length: dailyPointsHistory.length }, (_, i) => `Jour ${i + 1}`);
+                chart.data.datasets[0].data = dailyPointsHistory;
+                chart.update(); // Mettre à jour le graphique existant
+            } else {
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({ length: dailyPointsHistory.length }, (_, i) => `Jour ${i + 1}`),
+                        datasets: [{
+                            label: 'Points',
+                            data: dailyPointsHistory,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y + ' points';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            totalPoints = 0;
+            dailyPointsHistory = [];
+            submitCount = 0;
+            undoClickCount = 0;
+            destroyChart(); // Détruire le graphique pour éviter les fuites de mémoire
+            document.getElementById('tracker-container').style.display = 'none';
+            document.getElementById('user-selection').style.display = 'block';
+            document.getElementById('add-user-container').style.display = 'none';
+            document.getElementById('userName').value = ''; // Réinitialiser le champ de texte
+            updateUserList(); // Réafficher la liste des utilisateurs pour être sûr
+        }
+
+        window.onload = loadUserData;
+    </script>
+</body>
+</html>
