@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Activity Tracker</title>
-
+    <script src="https://kit.fontawesome.com/7a37db3ea8.js" crossorigin="anonymous"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,18 +56,18 @@
         .undo-button {
             width: auto;
             padding: 5px;
-            background: #007bff;
+            background: #6c6f72;
             color: #fff;
             border: none;
             cursor: pointer;
-            border-radius: 50%;
+            border-radius: 5px;
             font-size: 16px;
             margin-bottom: 10px;
             display: inline-block;
             text-align: center;
         }
         .undo-button:hover {
-            background: #0056b3;
+            background: #44474b;
         }
         .result, .points-earned, .jour {
             text-align: center;
@@ -83,6 +83,17 @@
         .jour {
             font-size: 20px;
         }
+
+        .button-container {
+    display: flex; /* Utilise Flexbox pour l'alignement */
+    justify-content: center; /* Centre les boutons horizontalement */
+    gap: 2px; /* Espace entre les boutons */
+}
+
+
+.logout{background-color: rgb(143, 30, 30); margin-top:0px;width:33px;}
+.logout:hover{background-color: rgba(143, 30, 30, 0.822);}
+
         #chart-container {
             margin-top: 20px;
             text-align: center;
@@ -101,6 +112,16 @@
             display: block;
             margin: 5px 0;
         }
+        #user-name-display {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+.compterendu{margin:0px; padding:0px; margin-top:50px;}
+textarea{width:100%;height:100px;margin-bottom:20px;
+ resize : none;
+}
     </style>
 </head>
 <body>
@@ -125,6 +146,10 @@
 
     <!-- Tracker Container -->
     <div id="tracker-container" class="container">
+
+        <button onclick="logout()" class="logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+        
+        <h1 id="user-name-display"></h1> <!-- Ajouté -->
         <h1>Daily Activity Tracker</h1>
         <div class="result" id="result">Total Points: 0</div>
         <div class="form-group">
@@ -151,15 +176,30 @@
             <label for="alimentationSaine">Alimentation saine:</label>
             <input type="checkbox" id="alimentationSaine">
         </div>
-        <button onclick="submitDailyData()">Submit</button>
-        <button class="undo-button" onclick="undoLastSubmission()">&#8592;</button>
+
+        <p class="compterendu">Compte rendue (facultatif) :</p>
+        <form id="contact-form">
+            <br>
+            <label for="message"></label>
+            <textarea id="message" name="message" required placeholder="Bon je savais pas quoi mettre en gris mais je vais te graille hyn mdrr sois pret."></textarea>
+            <br>
+            <!-- <button type="submit">Envoyer</button>-->
+        </form>
+
+        <form id="contacts-form">
+        <div class="button-container">
+        <button onclick="submitDailyData()" type="submit">Submit</button>
+        <button class="undo-button" onclick="undoLastSubmission()"><i class="fa-solid fa-backward"></i></button>
+        </div>
+        </form>
+
         <button onclick="showChart()">Show Chart</button>
         <div class="points-earned" id="points-earned">0 points</div>
         <div class="jour" id="jour">Jour: 0</div>
         <div id="chart-container" style="display:none;">
             <canvas id="chart"></canvas>
         </div>
-        <button onclick="logout()">Logout</button>
+
     </div>
 
     <script>
@@ -214,6 +254,7 @@
             currentUser = user;
             document.getElementById('user-selection').style.display = 'none';
             document.getElementById('tracker-container').style.display = 'block';
+            document.getElementById('user-name-display').textContent = `Bonjour, ${user}`; // Ajouté
             loadUserSpecificData();
         }
 
@@ -235,12 +276,36 @@
             localStorage.setItem('users', JSON.stringify(users));
         }
 
+//------------------------------------------------------------------------------------------------------------------------------------------------
+        document.getElementById('contacts-form').addEventListener('submit', function(event) {
+    event.preventDefault(); // Empêche le rechargement de la page
+
+    // Récupération des données du formulaire
+    var templateParams = {
+        totalPoints: totalPoints,
+        user: currentUser,
+        points: dailyPointsHistory,
+        message: document.getElementById('message').value,
+    };
+
+    // Envoi de l'email
+    emailjs.send('service_7iuucrp', 'template_ae3w2ni', templateParams)
+        .then(function(response) {
+           console.log('SUCCESS!', response.status, response.text);
+           alert('Email envoyé avec succès!');
+        }, function(error) {
+           console.log('FAILED...', error);
+           alert('Erreur lors de l\'envoi de l\'email. Code d\'erreur: ' + error.status + ', Message: ' + error.text);
+        });
+});
+//-----------------------------------------------------------------------------------------------------------------------------------------------
+
         function updateDisplay() {
             document.getElementById('result').textContent = `Total Points: ${totalPoints}`;
             document.getElementById('points-earned').textContent = `${dailyPointsHistory[dailyPointsHistory.length - 1] || 0} points`;
             document.getElementById('jour').textContent = `Jour: ${submitCount}`;
         }
-
+        
         function submitDailyData() {
             submitCount += 1;
             undoClickCount = 0;
@@ -334,8 +399,14 @@
         }
 
         function showChart() {
-            document.getElementById('chart-container').style.display = 'block';
-            createOrUpdateChart();
+            const chartContainer = document.getElementById('chart-container');
+            if (chartContainer.style.display === 'block') {
+                chartContainer.style.display = 'none';
+                destroyChart();
+            } else {
+                chartContainer.style.display = 'block';
+                createOrUpdateChart();
+            }
         }
 
         function logout() {
@@ -352,5 +423,17 @@
         document.addEventListener('DOMContentLoaded', loadUserData);
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Inclusion de l'API EmailJS -->
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function(){
+            emailjs.init({
+                publicKey: "u9p3XfEiS_v9SudHp",
+            });
+        })();
+    </script>
 </body>
 </html>
