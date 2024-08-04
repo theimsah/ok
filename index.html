@@ -229,12 +229,13 @@
       document.getElementById('submitActivitiesBtn').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (user) {
+          const activityForms = document.querySelectorAll('.activity-item');
           let totalPoints = 0;
-          const activityForms = document.querySelectorAll('.activity-form');
-          activityForms.forEach(async (form) => {
-            const activityId = form.getAttribute('data-id');
-            const activitySnapshot = await getDoc(doc(firestore, 'activities', activityId));
-            const activityData = activitySnapshot.data();
+          
+          for (const form of activityForms) {
+            const id = form.getAttribute('data-id');
+            const activityDoc = await getDoc(doc(firestore, 'activities', id));
+            const activityData = activityDoc.data();
             const type = activityData.type;
 
             if (type === 'hours') {
@@ -244,16 +245,20 @@
               const checkboxChecked = form.querySelector('.checkbox-input').checked;
               totalPoints += checkboxChecked ? activityData.points : 0;
             }
-          });
+          }
 
           // Attendre que toutes les mises à jour soient terminées
           await new Promise(resolve => setTimeout(resolve, 500));
 
+          // Afficher le total des points
           document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
 
           // Mettre à jour les points totaux de l'utilisateur pour la journée
           const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${new Date().toISOString().split('T')[0]}`);
-          await setDoc(dailyPointsRef, { points: totalPoints }, { merge: true });
+          const dailyPointsDoc = await getDoc(dailyPointsRef);
+          const previousPoints = dailyPointsDoc.exists() ? (dailyPointsDoc.data().points || 0) : 0;
+          const newTotalPoints = previousPoints + totalPoints;
+          await setDoc(dailyPointsRef, { points: newTotalPoints }, { merge: true });
         } else {
           alert('Vous devez être connecté pour soumettre les activités.');
         }
