@@ -44,6 +44,8 @@
       padding: 10px;
       margin: 10px 0;
       border-radius: 4px;
+      display: flex;
+      align-items: center;
     }
     .activity-item input, .activity-item select {
       width: auto;
@@ -56,6 +58,26 @@
     }
     .activity-item button:hover {
       background-color: #e64a19;
+    }
+    .add-activity-btn {
+      background-color: #424242;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    .add-activity-btn:hover {
+      background-color: #616161;
     }
   </style>
   <script type="module">
@@ -123,9 +145,15 @@
         const activityElement = document.createElement('div');
         activityElement.className = 'activity-item';
         activityElement.innerHTML = `
-          <strong>${data.name}</strong><br>
-          Points: ${data.points}<br>
-          Type: ${data.type}
+          <form class="activity-form" data-id="${doc.id}">
+            <strong>${data.name}</strong><br>
+            <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
+            <label>
+              <input type="checkbox" class="checkbox-input">
+              Points par case cochée
+            </label>
+            <button type="submit">Ajouter</button>
+          </form>
         `;
         activitiesContainer.appendChild(activityElement);
       });
@@ -181,6 +209,34 @@
           alert('Vous devez être connecté pour ajouter une activité.');
         }
       });
+
+      // Ajouter une activité via le bouton "+"
+      document.getElementById('addActivityBtn').addEventListener('click', () => {
+        document.getElementById('addActivityForm').style.display = 'block';
+      });
+
+      // Gérer les formulaires d'activités
+      document.getElementById('activities').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        const activityId = form.getAttribute('data-id');
+        const hoursInput = form.querySelector('.hours-input');
+        const checkboxInput = form.querySelector('.checkbox-input');
+        const hours = parseFloat(hoursInput.value) || 0;
+        const checkboxChecked = checkboxInput.checked;
+
+        if (auth.currentUser) {
+          const userId = auth.currentUser.uid;
+          const activityRef = doc(firestore, 'activities', activityId);
+          const activitySnapshot = await getDoc(activityRef);
+          const activityData = activitySnapshot.data();
+
+          if (activityData) {
+            const totalPoints = hours * activityData.points + (checkboxChecked ? activityData.points : 0);
+            alert(`Total Points: ${totalPoints}`);
+          }
+        }
+      });
     });
   </script>
 </head>
@@ -212,8 +268,8 @@
     <p id="username"></p>
     <button id="signOutBtn">Se déconnecter</button>
 
-    <!-- Formulaire d'ajout d'activité -->
-    <form id="addActivityForm" class="activity-form">
+    <!-- Formulaire d'ajout d'activité (initialement caché) -->
+    <form id="addActivityForm" class="activity-form" style="display: none;">
       <h2>Ajouter une Activité</h2>
       <input type="text" id="activityName" placeholder="Nom de l'activité" required>
       <input type="number" id="activityPoints" placeholder="Points" required>
@@ -230,5 +286,8 @@
       <!-- Les activités seront affichées ici -->
     </div>
   </div>
+
+  <!-- Bouton "+" pour ajouter une activité -->
+  <button id="addActivityBtn" class="add-activity-btn">+</button>
 </body>
 </html>
