@@ -4,27 +4,51 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Firebase Authentication</title>
-  <!-- Importer les SDKs Firebase nécessaires -->
+  <!-- Firebase App (base) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
+  <!-- Firebase Authentication -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"></script>
+</head>
+<body>
+  <h1>Firebase Authentication</h1>
+
+  <!-- Formulaire d'inscription -->
+  <form id="signupForm">
+    <h2>Inscription</h2>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Mot de passe" required>
+    <button type="submit">S'inscrire</button>
+  </form>
+
+  <!-- Formulaire de connexion -->
+  <form id="signinForm">
+    <h2>Connexion</h2>
+    <input type="email" id="signinEmail" placeholder="Email" required>
+    <input type="password" id="signinPassword" placeholder="Mot de passe" required>
+    <button type="submit">Se connecter</button>
+  </form>
+
   <script type="module">
+    // Importer les modules nécessaires de Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     // Configuration de Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
-      authDomain: "last-9aee8.firebaseapp.com",
-      projectId: "last-9aee8",
-      storageBucket: "last-9aee8.appspot.com",
-      messagingSenderId: "543978749666",
-      appId: "1:543978749666:web:0587a84de496dd7073a8bb",
-      measurementId: "G-SCY61WX3QH"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID",
+      measurementId: "YOUR_MEASUREMENT_ID"
     };
 
     // Initialiser Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Fonction pour gérer l'inscription
+    // Inscription
     document.getElementById('signupForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       const email = document.getElementById('email').value;
@@ -38,7 +62,7 @@
       }
     });
 
-    // Fonction pour gérer la connexion
+    // Connexion
     document.getElementById('signinForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       const email = document.getElementById('signinEmail').value;
@@ -62,24 +86,5 @@
       }
     });
   </script>
-</head>
-<body>
-  <h1>Firebase Authentication</h1>
-
-  <!-- Formulaire d'inscription -->
-  <form id="signupForm">
-    <h2>Inscription</h2>
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Mot de passe" required>
-    <button type="submit">S'inscrire</button>
-  </form>
-
-  <!-- Formulaire de connexion -->
-  <form id="signinForm">
-    <h2>Connexion</h2>
-    <input type="email" id="signinEmail" placeholder="Email" required>
-    <input type="password" id="signinPassword" placeholder="Mot de passe" required>
-    <button type="submit">Se connecter</button>
-  </form>
 </body>
 </html>
