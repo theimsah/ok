@@ -110,6 +110,7 @@
           document.getElementById('profile-section').style.display = 'block';
           document.getElementById('username').innerText = `Bonjour, ${user.email}`;
           loadActivities(user.uid);
+          loadTotalPoints(user.uid);
         } else {
           document.getElementById('auth-section').style.display = 'block';
           document.getElementById('profile-section').style.display = 'none';
@@ -172,6 +173,14 @@
         }
         activitiesContainer.appendChild(activityElement);
       });
+    }
+
+    // Charger le total des points
+    async function loadTotalPoints(userId) {
+      const dailyPointsRef = doc(firestore, 'dailyPoints', `${userId}_${new Date().toISOString().split('T')[0]}`);
+      const dailyPointsSnapshot = await getDoc(dailyPointsRef);
+      const dailyPoints = dailyPointsSnapshot.exists() ? dailyPointsSnapshot.data().points : 0;
+      document.getElementById('totalPoints').innerText = `Total Points: ${dailyPoints}`;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -249,11 +258,19 @@
           // Attendre que toutes les promesses soient résolues
           await Promise.all(activityPromises);
 
-          document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
+          // Charger le total actuel des points
+          const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${new Date().toISOString().split('T')[0]}`);
+          const dailyPointsSnapshot = await getDoc(dailyPointsRef);
+          const previousTotalPoints = dailyPointsSnapshot.exists() ? dailyPointsSnapshot.data().points : 0;
+
+          // Calculer le nouveau total
+          const newTotalPoints = previousTotalPoints + totalPoints;
 
           // Mettre à jour les points totaux de l'utilisateur pour la journée
-          const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${new Date().toISOString().split('T')[0]}`);
-          await setDoc(dailyPointsRef, { points: totalPoints }, { merge: true });
+          await setDoc(dailyPointsRef, { points: newTotalPoints }, { merge: true });
+
+          // Mettre à jour l'affichage
+          document.getElementById('totalPoints').innerText = `Total Points: ${newTotalPoints}`;
         } else {
           alert('Vous devez être connecté pour soumettre les activités.');
         }
