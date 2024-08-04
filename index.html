@@ -61,6 +61,7 @@
     // Vérifier l'état de connexion
     function checkAuthState() {
       onAuthStateChanged(auth, (user) => {
+        console.log("Vérification de l'état de connexion", user); // Débogage
         if (user) {
           document.getElementById('auth-section').style.display = 'none';
           document.getElementById('profile-section').style.display = 'block';
