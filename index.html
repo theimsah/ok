@@ -231,7 +231,7 @@
         if (user) {
           let totalPoints = 0;
           const activityForms = document.querySelectorAll('.activity-form');
-          activityForms.forEach(async (form) => {
+          const activityPromises = Array.from(activityForms).map(async (form) => {
             const activityId = form.getAttribute('data-id');
             const activitySnapshot = await getDoc(doc(firestore, 'activities', activityId));
             const activityData = activitySnapshot.data();
@@ -246,8 +246,8 @@
             }
           });
 
-          // Attendre que toutes les mises à jour soient terminées
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Attendre que toutes les promesses soient résolues
+          await Promise.all(activityPromises);
 
           document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
 
@@ -270,17 +270,12 @@
 <body>
   <!-- Section d'authentification -->
   <div id="auth-section">
-    <h1>Inscription et Connexion</h1>
-
-    <!-- Formulaire d'inscription -->
     <form id="signupForm">
       <h2>Inscription</h2>
       <input type="email" id="signupEmail" placeholder="Email" required>
       <input type="password" id="signupPassword" placeholder="Mot de passe" required>
       <button type="submit">S'inscrire</button>
     </form>
-
-    <!-- Formulaire de connexion -->
     <form id="signinForm">
       <h2>Connexion</h2>
       <input type="email" id="signinEmail" placeholder="Email" required>
@@ -289,38 +284,34 @@
     </form>
   </div>
 
-  <!-- Section de profil -->
+  <!-- Section du profil utilisateur -->
   <div id="profile-section" style="display: none;">
-    <h1>Page Personnalisée</h1>
-    <p id="username"></p>
+    <h2 id="username"></h2>
     <button id="signOutBtn">Se déconnecter</button>
-
-    <!-- Formulaire d'ajout d'activité (initialement caché) -->
-    <form id="addActivityForm" class="activity-form" style="display: none;">
-      <h2>Ajouter une Activité</h2>
+    
+    <!-- Formulaire d'ajout d'activité -->
+    <form id="addActivityForm" style="display: none;">
+      <h3>Ajouter une activité</h3>
       <input type="text" id="activityName" placeholder="Nom de l'activité" required>
-      <input type="number" id="activityPoints" placeholder="Points" required>
+      <input type="number" id="activityPoints" placeholder="Points par activité" min="0" step="0.1" required>
       <select id="activityType">
-        <option value="hours">Points par heure</option>
-        <option value="checkbox">Points par case cochée</option>
+        <option value="hours">Heures</option>
+        <option value="checkbox">Case cochée</option>
       </select>
-      <button type="submit">Ajouter Activité</button>
+      <button type="submit">Ajouter</button>
     </form>
-
+    
     <!-- Liste des activités -->
-    <div id="activities">
-      <h2>Mes Activités</h2>
-      <!-- Les activités seront affichées ici -->
-    </div>
+    <div id="activities"></div>
 
-    <!-- Affichage du total des points -->
-    <div id="totalPoints" class="total-points">Total Points: 0</div>
-
-    <!-- Bouton de soumission des activités -->
-    <button id="submitActivitiesBtn" class="submit-btn">Calculer et Soumettre</button>
+    <!-- Affichage des points totaux -->
+    <div class="total-points" id="totalPoints">Total Points: 0</div>
+    
+    <!-- Bouton pour ajouter une activité -->
+    <div class="add-activity-btn" id="addActivityBtn">+</div>
+    
+    <!-- Bouton pour soumettre les activités -->
+    <button id="submitActivitiesBtn">Soumettre les activités</button>
   </div>
-
-  <!-- Bouton "+" pour ajouter une activité -->
-  <button id="addActivityBtn" class="add-activity-btn">+</button>
 </body>
 </html>
