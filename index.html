@@ -230,11 +230,10 @@
         const user = auth.currentUser;
         if (user) {
           let totalPoints = 0;
-          const activityForms = document.querySelectorAll('#activities .activity-form');
+          const activityForms = document.querySelectorAll('.activity-form');
           activityForms.forEach(async (form) => {
             const activityId = form.getAttribute('data-id');
-            const activityRef = doc(firestore, 'activities', activityId);
-            const activitySnapshot = await getDoc(activityRef);
+            const activitySnapshot = await getDoc(doc(firestore, 'activities', activityId));
             const activityData = activitySnapshot.data();
             const type = activityData.type;
 
