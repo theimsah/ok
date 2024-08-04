@@ -97,7 +97,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     // Configuration Firebase
     const firebaseConfig = {
@@ -159,7 +159,7 @@
         const activityElement = document.createElement('div');
         activityElement.className = 'activity-item';
         activityElement.innerHTML = `
-          <div class="activity-form" data-id="${doc.id}">
+          <div class="activity-form" data-id="${doc.id}" data-points="${data.points}" data-type="${data.type}">
             <strong>${data.name}</strong><br>
             <div class="hours-only">
               <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
@@ -225,20 +225,7 @@
         }
       });
 
-      document.getElementById('addActivityForm').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const user = auth.currentUser;
-        if (user) {
-          const name = document.getElementById('activityName').value;
-          const points = document.getElementById('activityPoints').value;
-          const type = document.getElementById('activityType').value;
-          await addActivity(user.uid, name, points, type);
-        } else {
-          alert('Vous devez être connecté pour ajouter une activité.');
-        }
-      });
-
-      // Gérer la soumission du formulaire des activités
+      // Soumettre les activités et calculer les points
       document.getElementById('submitActivitiesBtn').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (user) {
@@ -246,14 +233,15 @@
           const activitiesForms = document.querySelectorAll('.activity-form');
 
           activitiesForms.forEach((form) => {
-            const type = form.querySelector('input[name="activityType"]').value;
+            const type = form.dataset.type;
+            const points = parseFloat(form.dataset.points);
 
             if (type === 'hours') {
               const hours = parseFloat(form.querySelector('.hours-input').value) || 0;
-              totalPoints += hours * form.dataset.points;
+              totalPoints += hours * points;
             } else {
               const checkboxChecked = form.querySelector('.checkbox-input').checked;
-              totalPoints += checkboxChecked ? form.dataset.points : 0;
+              totalPoints += checkboxChecked ? points : 0;
             }
           });
 
