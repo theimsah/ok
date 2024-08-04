@@ -217,7 +217,7 @@
         const user = auth.currentUser;
         if (user) {
           const name = document.getElementById('activityName').value;
-          const points = document.getElementById('activityPoints').value;
+          const points = parseFloat(document.getElementById('activityPoints').value);
           const type = document.getElementById('activityType').value;
           await addActivity(user.uid, name, points, type);
         } else {
@@ -236,7 +236,6 @@
             const activitySnapshot = await getDoc(doc(firestore, 'activities', activityId));
             const activityData = activitySnapshot.data();
             const type = activityData.type;
-
             if (type === 'hours') {
               const hours = parseFloat(form.querySelector('.hours-input').value) || 0;
               totalPoints += hours * activityData.points;
