@@ -46,6 +46,7 @@
       border-radius: 4px;
       display: flex;
       align-items: center;
+      flex-direction: column;
     }
     .activity-item input, .activity-item select {
       width: auto;
@@ -79,11 +80,14 @@
     .add-activity-btn:hover {
       background-color: #616161;
     }
+    .hours-only, .checkbox-only {
+      display: none;
+    }
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     // Configuration Firebase
     const firebaseConfig = {
@@ -147,14 +151,29 @@
         activityElement.innerHTML = `
           <form class="activity-form" data-id="${doc.id}">
             <strong>${data.name}</strong><br>
-            <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
-            <label>
-              <input type="checkbox" class="checkbox-input">
-              Points par case cochée
-            </label>
+            <div class="hours-only">
+              <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
+            </div>
+            <div class="checkbox-only">
+              <label>
+                <input type="checkbox" class="checkbox-input">
+                Points par case cochée
+              </label>
+            </div>
             <button type="submit">Ajouter</button>
           </form>
         `;
+        // Afficher ou cacher les champs selon le type d'activité
+        const type = data.type;
+        const hoursOnly = activityElement.querySelector('.hours-only');
+        const checkboxOnly = activityElement.querySelector('.checkbox-only');
+        if (type === 'hours') {
+          hoursOnly.style.display = 'block';
+          checkboxOnly.style.display = 'none';
+        } else {
+          hoursOnly.style.display = 'none';
+          checkboxOnly.style.display = 'block';
+        }
         activitiesContainer.appendChild(activityElement);
       });
     }
@@ -212,29 +231,37 @@
 
       // Ajouter une activité via le bouton "+"
       document.getElementById('addActivityBtn').addEventListener('click', () => {
-        document.getElementById('addActivityForm').style.display = 'block';
+        const addActivityForm = document.getElementById('addActivityForm');
+        addActivityForm.style.display = addActivityForm.style.display === 'none' ? 'block' : 'none';
       });
 
-      // Gérer les formulaires d'activités
+      // Gérer la soumission des formulaires d'activités
       document.getElementById('activities').addEventListener('submit', async (event) => {
         event.preventDefault();
-        const form = event.target.closest('form');
+        const form = event.target;
         const activityId = form.getAttribute('data-id');
-        const hoursInput = form.querySelector('.hours-input');
-        const checkboxInput = form.querySelector('.checkbox-input');
-        const hours = parseFloat(hoursInput.value) || 0;
-        const checkboxChecked = checkboxInput.checked;
+        const activityRef = doc(firestore, 'activities', activityId);
+        const activitySnapshot = await getDoc(activityRef);
+        const activityData = activitySnapshot.data();
+        const user = auth.currentUser;
 
-        if (auth.currentUser) {
-          const userId = auth.currentUser.uid;
-          const activityRef = doc(firestore, 'activities', activityId);
-          const activitySnapshot = await getDoc(activityRef);
-          const activityData = activitySnapshot.data();
+        if (activityData && user) {
+          const type = activityData.type;
+          let totalPoints = 0;
 
-          if (activityData) {
-            const totalPoints = hours * activityData.points + (checkboxChecked ? activityData.points : 0);
-            alert(`Total Points: ${totalPoints}`);
+          if (type === 'hours') {
+            const hours = parseFloat(form.querySelector('.hours-input').value) || 0;
+            totalPoints = hours * activityData.points;
+          } else {
+            const checkboxChecked = form.querySelector('.checkbox-input').checked;
+            totalPoints = checkboxChecked ? activityData.points : 0;
           }
+
+          alert(`Total Points: ${totalPoints}`);
+
+          // Mettre à jour les points totaux de l'utilisateur pour la journée
+          const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${new Date().toISOString().split('T')[0]}`);
+          await setDoc(dailyPointsRef, { points: totalPoints }, { merge: true });
         }
       });
     });
