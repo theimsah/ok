@@ -3,6 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Authentication</title>
+  <!-- Importer les SDKs Firebase nécessaires -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // Configuration de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
+      authDomain: "last-9aee8.firebaseapp.com",
+      projectId: "last-9aee8",
+      storageBucket: "last-9aee8.appspot.com",
+      messagingSenderId: "543978749666",
+      appId: "1:543978749666:web:0587a84de496dd7073a8bb",
+      measurementId: "G-SCY61WX3QH"
+    };
+
+    // Initialiser Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Fonction pour gérer l'inscription
+    document.getElementById('signupForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('Inscription réussie!');
+      } catch (error) {
+        console.error('Erreur d\'inscription:', error);
+        alert('Erreur d\'inscription : ' + error.message);
+      }
+    });
+
+    // Fonction pour gérer la connexion
+    document.getElementById('signinForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = document.getElementById('signinEmail').value;
+      const password = document.getElementById('signinPassword').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert('Connexion réussie!');
+      } catch (error) {
+        console.error('Erreur de connexion:', error);
+        alert('Erreur de connexion : ' + error.message);
+      }
+    });
+
+    // Écouter l'état de connexion
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('Utilisateur connecté:', user);
+        // Faites quelque chose avec l'utilisateur connecté
+      } else {
+        console.log('Aucun utilisateur connecté');
+      }
+    });
+  </script>
+</head>
+<body>
+  <h1>Firebase Authentication</h1>
+
+  <!-- Formulaire d'inscription -->
+  <form id="signupForm">
+    <h2>Inscription</h2>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Mot de passe" required>
+    <button type="submit">S'inscrire</button>
+  </form>
+
+  <!-- Formulaire de connexion -->
+  <form id="signinForm">
+    <h2>Connexion</h2>
+    <input type="email" id="signinEmail" placeholder="Email" required>
+    <input type="password" id="signinPassword" placeholder="Mot de passe" required>
+    <button type="submit">Se connecter</button>
+  </form>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inscription et Connexion</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
