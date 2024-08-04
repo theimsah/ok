@@ -48,8 +48,9 @@
       flex-direction: column;
       align-items: center;
     }
-    .hours-only, .checkbox-only {
-      display: none;
+    .activity-item input, .activity-item select {
+      width: auto;
+      display: inline-block;
     }
     .add-activity-btn {
       background-color: #424242;
@@ -71,6 +72,9 @@
     .add-activity-btn:hover {
       background-color: #616161;
     }
+    .hours-only, .checkbox-only {
+      display: none;
+    }
     .total-points {
       margin: 20px 0;
       font-size: 18px;
@@ -80,7 +84,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     // Configuration Firebase
     const firebaseConfig = {
@@ -106,7 +110,6 @@
           document.getElementById('profile-section').style.display = 'block';
           document.getElementById('username').innerText = `Bonjour, ${user.email}`;
           loadActivities(user.uid);
-          updateTotalPoints(user.uid); // Met à jour les points totaux lors du chargement
         } else {
           document.getElementById('auth-section').style.display = 'block';
           document.getElementById('profile-section').style.display = 'none';
@@ -142,17 +145,18 @@
         const data = doc.data();
         const activityElement = document.createElement('div');
         activityElement.className = 'activity-item';
-        activityElement.setAttribute('data-id', doc.id);
         activityElement.innerHTML = `
-          <strong>${data.name}</strong><br>
-          <div class="hours-only">
-            <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
-          </div>
-          <div class="checkbox-only">
-            <label>
-              <input type="checkbox" class="checkbox-input">
-              Points par case cochée
-            </label>
+          <div class="activity-form" data-id="${doc.id}">
+            <strong>${data.name}</strong><br>
+            <div class="hours-only">
+              <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
+            </div>
+            <div class="checkbox-only">
+              <label>
+                <input type="checkbox" class="checkbox-input">
+                Points par case cochée
+              </label>
+            </div>
           </div>
         `;
         // Afficher ou cacher les champs selon le type d'activité
@@ -168,15 +172,6 @@
         }
         activitiesContainer.appendChild(activityElement);
       });
-    }
-
-    // Mettre à jour les points totaux
-    async function updateTotalPoints(userId) {
-      const today = new Date().toISOString().split('T')[0];
-      const dailyPointsRef = doc(firestore, 'dailyPoints', `${userId}_${today}`);
-      const dailyPointsDoc = await getDoc(dailyPointsRef);
-      const totalPoints = dailyPointsDoc.exists() ? dailyPointsDoc.data().points : 0;
-      document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -222,7 +217,7 @@
         const user = auth.currentUser;
         if (user) {
           const name = document.getElementById('activityName').value;
-          const points = parseFloat(document.getElementById('activityPoints').value);
+          const points = document.getElementById('activityPoints').value;
           const type = document.getElementById('activityType').value;
           await addActivity(user.uid, name, points, type);
         } else {
@@ -230,16 +225,16 @@
         }
       });
 
+      // Gérer la soumission du formulaire des activités
       document.getElementById('submitActivitiesBtn').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (user) {
-          const activityForms = document.querySelectorAll('.activity-item');
           let totalPoints = 0;
-
-          for (const form of activityForms) {
-            const id = form.getAttribute('data-id');
-            const activityDoc = await getDoc(doc(firestore, 'activities', id));
-            const activityData = activityDoc.data();
+          const activityForms = document.querySelectorAll('.activity-form');
+          activityForms.forEach(async (form) => {
+            const activityId = form.getAttribute('data-id');
+            const activitySnapshot = await getDoc(doc(firestore, 'activities', activityId));
+            const activityData = activitySnapshot.data();
             const type = activityData.type;
 
             if (type === 'hours') {
@@ -249,26 +244,22 @@
               const checkboxChecked = form.querySelector('.checkbox-input').checked;
               totalPoints += checkboxChecked ? activityData.points : 0;
             }
-          }
+          });
 
-          // Afficher le total des points
+          // Attendre que toutes les mises à jour soient terminées
+          await new Promise(resolve => setTimeout(resolve, 500));
+
           document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
 
           // Mettre à jour les points totaux de l'utilisateur pour la journée
-          const today = new Date().toISOString().split('T')[0];
-          const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${today}`);
-          const dailyPointsDoc = await getDoc(dailyPointsRef);
-          const previousPoints = dailyPointsDoc.exists() ? (dailyPointsDoc.data().points || 0) : 0;
-          const newTotalPoints = previousPoints + totalPoints;
-          await setDoc(dailyPointsRef, { points: newTotalPoints }, { merge: true });
-
-          // Mettre à jour l'affichage des points totaux
-          updateTotalPoints(user.uid);
+          const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${new Date().toISOString().split('T')[0]}`);
+          await setDoc(dailyPointsRef, { points: totalPoints }, { merge: true });
         } else {
           alert('Vous devez être connecté pour soumettre les activités.');
         }
       });
 
+      // Afficher le formulaire d'ajout d'activité au clic sur le bouton "+"
       document.getElementById('addActivityBtn').addEventListener('click', () => {
         const form = document.getElementById('addActivityForm');
         form.style.display = form.style.display === 'none' ? 'block' : 'none';
