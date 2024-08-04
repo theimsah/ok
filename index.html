@@ -45,8 +45,8 @@
       margin: 10px 0;
       border-radius: 4px;
       display: flex;
-      align-items: center;
       flex-direction: column;
+      align-items: center;
     }
     .activity-item input, .activity-item select {
       width: auto;
@@ -83,11 +83,16 @@
     .hours-only, .checkbox-only {
       display: none;
     }
+    .total-points {
+      margin: 20px 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     // Configuration Firebase
     const firebaseConfig = {
@@ -160,7 +165,6 @@
                 Points par case cochée
               </label>
             </div>
-            <button type="submit">Ajouter</button>
           </form>
         `;
         // Afficher ou cacher les champs selon le type d'activité
@@ -229,39 +233,35 @@
         }
       });
 
-      // Ajouter une activité via le bouton "+"
-      document.getElementById('addActivityBtn').addEventListener('click', () => {
-        const addActivityForm = document.getElementById('addActivityForm');
-        addActivityForm.style.display = addActivityForm.style.display === 'none' ? 'block' : 'none';
-      });
-
-      // Gérer la soumission des formulaires d'activités
-      document.getElementById('activities').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const form = event.target;
-        const activityId = form.getAttribute('data-id');
-        const activityRef = doc(firestore, 'activities', activityId);
-        const activitySnapshot = await getDoc(activityRef);
-        const activityData = activitySnapshot.data();
+      // Gérer la soumission du formulaire des activités
+      document.getElementById('submitActivitiesBtn').addEventListener('click', async () => {
         const user = auth.currentUser;
-
-        if (activityData && user) {
-          const type = activityData.type;
+        if (user) {
           let totalPoints = 0;
+          const activityForms = document.querySelectorAll('#activities .activity-item form');
+          activityForms.forEach(async (form) => {
+            const activityId = form.getAttribute('data-id');
+            const activityRef = doc(firestore, 'activities', activityId);
+            const activitySnapshot = await getDoc(activityRef);
+            const activityData = activitySnapshot.data();
+            const type = activityData.type;
 
-          if (type === 'hours') {
-            const hours = parseFloat(form.querySelector('.hours-input').value) || 0;
-            totalPoints = hours * activityData.points;
-          } else {
-            const checkboxChecked = form.querySelector('.checkbox-input').checked;
-            totalPoints = checkboxChecked ? activityData.points : 0;
-          }
+            if (type === 'hours') {
+              const hours = parseFloat(form.querySelector('.hours-input').value) || 0;
+              totalPoints += hours * activityData.points;
+            } else {
+              const checkboxChecked = form.querySelector('.checkbox-input').checked;
+              totalPoints += checkboxChecked ? activityData.points : 0;
+            }
+          });
 
-          alert(`Total Points: ${totalPoints}`);
+          document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
 
           // Mettre à jour les points totaux de l'utilisateur pour la journée
           const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${new Date().toISOString().split('T')[0]}`);
           await setDoc(dailyPointsRef, { points: totalPoints }, { merge: true });
+        } else {
+          alert('Vous devez être connecté pour soumettre les activités.');
         }
       });
     });
@@ -312,6 +312,12 @@
       <h2>Mes Activités</h2>
       <!-- Les activités seront affichées ici -->
     </div>
+
+    <!-- Affichage du total des points -->
+    <div id="totalPoints" class="total-points">Total Points: 0</div>
+
+    <!-- Bouton de soumission des activités -->
+    <button id="submitActivitiesBtn" class="submit-btn">Calculer et Soumettre</button>
   </div>
 
   <!-- Bouton "+" pour ajouter une activité -->
