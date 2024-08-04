@@ -246,6 +246,9 @@
             }
           });
 
+          // Attendre que toutes les mises à jour soient terminées
+          await new Promise(resolve => setTimeout(resolve, 500));
+
           document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
 
           // Mettre à jour les points totaux de l'utilisateur pour la journée
