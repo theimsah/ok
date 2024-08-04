@@ -1,413 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Activity Tracker</title>
-    <link rel="icon" type="image/x-icon" href="favicon-16x16.png">
-    <script src="https://kit.fontawesome.com/7a37db3ea8.js" crossorigin="anonymous"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Firebase</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    form {
+      background-color: #1f1f1f;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      background-color: #6200ea;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3700b3;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
+      authDomain: "last-9aee8.firebaseapp.com",
+      projectId: "last-9aee8",
+      storageBucket: "last-9aee8.appspot.com",
+      messagingSenderId: "543978749666",
+      appId: "1:543978749666:web:0587a84de496dd7073a8bb",
+      measurementId: "G-SCY61WX3QH"
+    };
+
+    // Initialiser Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Vérifier l'état de connexion
+    function checkAuthState() {
+      onAuthStateChanged(auth, (user) => {
+        console.log("Vérification de l'état de connexion", user); // Débogage
+        if (user) {
+          document.getElementById('auth-section').style.display = 'none';
+          document.getElementById('profile-section').style.display = 'block';
+          document.getElementById('username').innerText = `Bonjour, ${user.email}`;
+        } else {
+          document.getElementById('auth-section').style.display = 'block';
+          document.getElementById('profile-section').style.display = 'none';
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
+      });
+    }
+
+    // Connexion
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuthState();
+
+      document.getElementById('signupForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          alert('Inscription réussie !');
+        } catch (error) {
+          console.error('Erreur d\'inscription:', error);
+          alert('Erreur d\'inscription : ' + error.message);
         }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
+      });
+
+      document.getElementById('signinForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const email = document.getElementById('signinEmail').value;
+        const password = document.getElementById('signinPassword').value;
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          alert('Connexion réussie !');
+        } catch (error) {
+          console.error('Erreur de connexion:', error);
+          alert('Erreur de connexion : ' + error.message);
         }
-        .form-group {
-            margin-bottom: 15px;
+      });
+
+      document.getElementById('signOutBtn').addEventListener('click', async () => {
+        try {
+          await signOut(auth);
+          alert('Déconnexion réussie !');
+        } catch (error) {
+          console.error('Erreur de déconnexion:', error);
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input[type="number"], input[type="checkbox"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        input[type="checkbox"] {
-            width: auto;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #28a745;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        button:hover {
-            background: #218838;
-        }
-        .undo-button {
-            width: auto;
-            padding: 5px;
-            background: #6c6f72;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-bottom: 10px;
-            display: inline-block;
-            text-align: center;
-        }
-        .undo-button:hover {
-            background: #44474b;
-        }
-        .result, .points-earned, .jour {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-        }
-        .result {
-            font-size: 24px;
-        }
-        .points-earned {
-            font-size: 20px;
-        }
-        .jour {
-            font-size: 20px;
-        }
-        .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 2px;
-        }
-        .logout {
-            background-color: rgb(143, 30, 30);
-            margin-top: 0px;
-            width: 33px;
-        }
-        .logout:hover {
-            background-color: rgba(143, 30, 30, 0.822);
-        }
-        #chart-container {
-            margin-top: 20px;
-            text-align: center;
-        }
-        #chart {
-            max-width: 100%;
-            height: 400px;
-        }
-        #user-selection, #tracker-container, #add-user-container {
-            display: none;
-        }
-        #user-selection {
-            display: block;
-        }
-        .user-list button {
-            display: block;
-            margin: 5px 0;
-        }
-        #user-name-display {
-            text-align: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        .compterendu {
-            margin: 0px;
-            padding: 0px;
-            margin-top: 50px;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-            margin-bottom: 20px;
-            resize: none;
-        }
-    </style>
+      });
+    });
+  </script>
 </head>
 <body>
+  <!-- Section d'authentification -->
+  <div id="auth-section">
+    <h1>Inscription et Connexion</h1>
 
-    <!-- User Selection -->
-    <div id="user-selection">
-        <h1>Select User</h1>
-        <div class="user-list" id="userList"></div>
-        <button onclick="document.getElementById('add-user-container').style.display = 'block';">Add User</button>
-    </div>
+    <!-- Formulaire d'inscription -->
+    <form id="signupForm">
+      <h2>Inscription</h2>
+      <input type="email" id="signupEmail" placeholder="Email" required>
+      <input type="password" id="signupPassword" placeholder="Mot de passe" required>
+      <button type="submit">S'inscrire</button>
+    </form>
 
-    <!-- Add User -->
-    <div id="add-user-container">
-        <h1>Add User</h1>
-        <div class="form-group">
-            <label for="userName">User Name:</label>
-            <input type="text" id="userName">
-        </div>
-        <button onclick="addUser()">Add</button>
-        <button onclick="document.getElementById('add-user-container').style.display = 'none';">Cancel</button>
-    </div>
+    <!-- Formulaire de connexion -->
+    <form id="signinForm">
+      <h2>Connexion</h2>
+      <input type="email" id="signinEmail" placeholder="Email" required>
+      <input type="password" id="signinPassword" placeholder="Mot de passe" required>
+      <button type="submit">Se connecter</button>
+    </form>
+  </div>
 
-    <!-- Tracker Container -->
-    <div id="tracker-container" class="container">
-        <button onclick="logout()" class="logout"><i class="fa-solid fa-right-from-bracket"></i></button>
-        <h1 id="user-name-display"></h1>
-        <h1>Daily Activity Tracker</h1>
-        <div class="result" id="result">Total Points: 0</div>
-        <div class="form-group">
-            <label for="sportHours">Sport (hours):</label>
-            <input type="number" id="sportHours" min="0" step="1">
-        </div>
-        <div class="form-group">
-            <label for="revisionHours">Revision (hours):</label>
-            <input type="number" id="revisionHours" min="0" step="1">
-        </div>
-        <div class="form-group">
-            <label for="travailHours">Travail (hours):</label>
-            <input type="number" id="travailHours" min="0" step="1">
-        </div>
-        <div class="form-group">
-            <label for="pratiqueReligieuse">Pratique religieuse:</label>
-            <input type="checkbox" id="pratiqueReligieuse">
-        </div>
-        <div class="form-group">
-            <label for="lectureHours">Lecture (hours):</label>
-            <input type="number" id="lectureHours" min="0" step="1">
-        </div>
-        <div class="form-group">
-            <label for="alimentationSaine">Alimentation saine:</label>
-            <input type="checkbox" id="alimentationSaine">
-        </div>
-        <p class="compterendu">Compte rendu (facultatif) :</p>
-        <form id="contact-form">
-            <br>
-            <label for="message"></label>
-            <textarea id="message" name="message" required placeholder="Un compte rendu ? Une réclamation de point supplémentaire ?"></textarea>
-            <br>
-        </form>
-        <form id="contacts-form">
-            <div class="button-container">
-                <button onclick="submitDailyData()" type="button">Submit</button>
-                <button class="undo-button" onclick="undoLastSubmission()"><i class="fa-solid fa-backward"></i></button>
-            </div>
-        </form>
-        <button onclick="showChart()">Show Chart</button>
-        <div class="points-earned" id="points-earned">0 points</div>
-        <div class="jour" id="jour">Jour: 0</div>
-        <div id="chart-container" style="display:none;">
-            <canvas id="chart"></canvas>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-        // Configuration Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
-            authDomain: "last-9aee8.firebaseapp.com",
-            projectId: "last-9aee8",
-            storageBucket: "last-9aee8.appspot.com",
-            messagingSenderId: "543978749666",
-            appId: "1:543978749666:web:cb8c46e6a0f5b18d79264c",
-            measurementId: "G-WE2R4SK69W"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const firestore = getFirestore(app);
-
-        let currentUser = null;
-        let totalPoints = 0;
-        let dailyPointsHistory = [];
-        let submitCount = 0;
-        let undoClickCount = 0;
-        let chart = null;
-
-        function loadUserData() {
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    currentUser = user.uid;
-                    loadUserSpecificData();
-                } else {
-                    document.getElementById('user-selection').style.display = 'block';
-                    document.getElementById('tracker-container').style.display = 'none';
-                }
-            });
-        }
-
-        async function loadUserSpecificData() {
-            const userDoc = doc(firestore, 'users', currentUser);
-            const userData = await getDoc(userDoc);
-
-            if (userData.exists()) {
-                const data = userData.data();
-                totalPoints = data.totalPoints || 0;
-                dailyPointsHistory = data.dailyPointsHistory || [];
-                submitCount = data.submitCount || 0;
-                undoClickCount = data.undoClickCount || 0;
-            } else {
-                await setDoc(userDoc, {
-                    totalPoints: 0,
-                    dailyPointsHistory: [],
-                    submitCount: 0,
-                    undoClickCount: 0
-                });
-            }
-
-            updateDisplay();
-            destroyChart();
-            createOrUpdateChart();
-        }
-
-        async function updateUserSpecificData() {
-            const userDoc = doc(firestore, 'users', currentUser);
-            await updateDoc(userDoc, {
-                totalPoints,
-                dailyPointsHistory,
-                submitCount,
-                undoClickCount
-            });
-        }
-
-        function updateDisplay() {
-            document.getElementById('result').textContent = `Total Points: ${totalPoints}`;
-            document.getElementById('points-earned').textContent = `${dailyPointsHistory[dailyPointsHistory.length - 1] || 0} points`;
-            document.getElementById('jour').textContent = `Jour: ${submitCount}`;
-        }
-
-        async function submitDailyData() {
-            submitCount += 1;
-            undoClickCount = 0;
-
-            const sportHours = parseInt(document.getElementById('sportHours').value) || 0;
-            const revisionHours = parseInt(document.getElementById('revisionHours').value) || 0;
-            const travailHours = parseInt(document.getElementById('travailHours').value) || 0;
-            const pratiqueReligieuse = document.getElementById('pratiqueReligieuse').checked;
-            const lectureHours = parseInt(document.getElementById('lectureHours').value) || 0;
-            const alimentationSaine = document.getElementById('alimentationSaine').checked;
-
-            let points = 0;
-            points += sportHours * 20;
-            points += revisionHours * 10;
-            points += travailHours * 10;
-            if (pratiqueReligieuse) points += 5;
-            if (!pratiqueReligieuse) {
-                points = 0; 
-                alert("Vous n'avez pas effectué la pratique religieuse. Le total de points est zéro.");
-            }
-            points += lectureHours * 8;
-            if (alimentationSaine) points += 4;
-
-            totalPoints += points;
-            dailyPointsHistory.push(points);
-
-            document.getElementById('sportHours').value = '';
-            document.getElementById('revisionHours').value = '';
-            document.getElementById('travailHours').value = '';
-            document.getElementById('pratiqueReligieuse').checked = false;
-            document.getElementById('lectureHours').value = '';
-            document.getElementById('alimentationSaine').checked = false;
-
-            await updateUserSpecificData();
-            updateDisplay();
-            destroyChart();
-            createOrUpdateChart();
-        }
-
-        async function undoLastSubmission() {
-            if (dailyPointsHistory.length === 0) return;
-            dailyPointsHistory.pop();
-            totalPoints = dailyPointsHistory.reduce((a, b) => a + b, 0);
-            submitCount -= 1;
-            undoClickCount += 1;
-            await updateUserSpecificData();
-            updateDisplay();
-            destroyChart();
-            createOrUpdateChart();
-        }
-
-        function createOrUpdateChart() {
-            const ctx = document.getElementById('chart').getContext('2d');
-            if (chart) {
-                chart.data.labels = dailyPointsHistory.map((_, index) => `Jour ${index + 1}`);
-                chart.data.datasets[0].data = dailyPointsHistory;
-                chart.update();
-            } else {
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: dailyPointsHistory.map((_, index) => `Jour ${index + 1}`),
-                        datasets: [{
-                            label: 'Points Earned',
-                            data: dailyPointsHistory,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Days'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Points'
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        function destroyChart() {
-            if (chart) {
-                chart.destroy();
-                chart = null;
-            }
-        }
-
-        function showChart() {
-            const chartContainer = document.getElementById('chart-container');
-            if (chartContainer.style.display === 'block') {
-                chartContainer.style.display = 'none';
-                destroyChart();
-            } else {
-                chartContainer.style.display = 'block';
-                createOrUpdateChart();
-            }
-        }
-
-        function logout() {
-            signOut(auth).then(() => {
-                currentUser = null;
-                totalPoints = 0;
-                dailyPointsHistory = [];
-                submitCount = 0;
-                undoClickCount = 0;
-                document.getElementById('tracker-container').style.display = 'none';
-                document.getElementById('user-selection').style.display = 'block';
-                destroyChart();
-            }).catch((error) => {
-                console.error('Error signing out:', error);
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', loadUserData);
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Section de profil -->
+  <div id="profile-section" style="display: none;">
+    <h1>Page Personnalisée</h1>
+    <p id="username"></p>
+    <button id="signOutBtn">Se déconnecter</button>
+  </div>
 </body>
 </html>
