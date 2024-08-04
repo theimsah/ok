@@ -80,6 +80,19 @@
       font-size: 18px;
       font-weight: bold;
     }
+    .form-toggle-btn {
+      background-color: #e0e0e0;
+      color: #000000;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .form-toggle-btn:hover {
+      background-color: #bdbdbd;
+    }
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -230,25 +243,21 @@
         const user = auth.currentUser;
         if (user) {
           let totalPoints = 0;
-          const activityForms = document.querySelectorAll('.activity-form');
-          activityForms.forEach(async (form) => {
-            const activityId = form.getAttribute('data-id');
-            const activitySnapshot = await getDoc(doc(firestore, 'activities', activityId));
-            const activityData = activitySnapshot.data();
-            const type = activityData.type;
+          const activitiesForms = document.querySelectorAll('.activity-form');
+
+          activitiesForms.forEach((form) => {
+            const type = form.querySelector('input[name="activityType"]').value;
 
             if (type === 'hours') {
               const hours = parseFloat(form.querySelector('.hours-input').value) || 0;
-              totalPoints += hours * activityData.points;
+              totalPoints += hours * form.dataset.points;
             } else {
               const checkboxChecked = form.querySelector('.checkbox-input').checked;
-              totalPoints += checkboxChecked ? activityData.points : 0;
+              totalPoints += checkboxChecked ? form.dataset.points : 0;
             }
           });
 
-          // Attendre que toutes les mises à jour soient terminées
-          await new Promise(resolve => setTimeout(resolve, 500));
-
+          // Mettre à jour le total des points affiché
           document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
 
           // Mettre à jour les points totaux de l'utilisateur pour la journée
@@ -259,11 +268,24 @@
         }
       });
 
-      // Afficher le formulaire d'ajout d'activité au clic sur le bouton "+"
-      document.getElementById('addActivityBtn').addEventListener('click', () => {
-        const form = document.getElementById('addActivityForm');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      // Afficher le formulaire d'inscription et cacher le formulaire de connexion
+      document.getElementById('showSignupFormBtn').addEventListener('click', () => {
+        document.getElementById('signinForm').style.display = 'none';
+        document.getElementById('signupForm').style.display = 'block';
+        document.getElementById('showSigninFormBtn').style.display = 'block';
+        document.getElementById('showSignupFormBtn').style.display = 'none';
       });
+
+      // Afficher le formulaire de connexion et cacher le formulaire d'inscription
+      document.getElementById('showSigninFormBtn').addEventListener('click', () => {
+        document.getElementById('signinForm').style.display = 'block';
+        document.getElementById('signupForm').style.display = 'none';
+        document.getElementById('showSigninFormBtn').style.display = 'none';
+        document.getElementById('showSignupFormBtn').style.display = 'block';
+      });
+
+      // Initialiser les boutons de formulaire
+      document.getElementById('showSignupFormBtn').style.display = 'none';
     });
   </script>
 </head>
@@ -272,13 +294,8 @@
   <div id="auth-section">
     <h1>Inscription et Connexion</h1>
 
-    <!-- Formulaire d'inscription -->
-    <form id="signupForm">
-      <h2>Inscription</h2>
-      <input type="email" id="signupEmail" placeholder="Email" required>
-      <input type="password" id="signupPassword" placeholder="Mot de passe" required>
-      <button type="submit">S'inscrire</button>
-    </form>
+    <!-- Bouton pour afficher le formulaire d'inscription -->
+    <button id="showSignupFormBtn" class="form-toggle-btn">S'inscrire</button>
 
     <!-- Formulaire de connexion -->
     <form id="signinForm">
@@ -287,6 +304,17 @@
       <input type="password" id="signinPassword" placeholder="Mot de passe" required>
       <button type="submit">Se connecter</button>
     </form>
+
+    <!-- Formulaire d'inscription -->
+    <form id="signupForm" style="display: none;">
+      <h2>Inscription</h2>
+      <input type="email" id="signupEmail" placeholder="Email" required>
+      <input type="password" id="signupPassword" placeholder="Mot de passe" required>
+      <button type="submit">S'inscrire</button>
+    </form>
+
+    <!-- Bouton pour revenir au formulaire de connexion -->
+    <button id="showSigninFormBtn" class="form-toggle-btn">Se connecter</button>
   </div>
 
   <!-- Section de profil -->
