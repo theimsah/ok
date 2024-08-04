@@ -1,180 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management</title>
-    <style>
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        button {
-            background-color: #1e1e1e;
-            color: #ffffff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            margin: 10px 0;
-        }
-        input {
-            padding: 10px;
-            margin: 5px 0;
-            border: none;
-            border-radius: 5px;
-        }
-        .hidden {
-            display: none;
-        }
-        .user-info {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .user-info img {
-            max-width: 100px;
-            border-radius: 50%;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Example</title>
+  <!-- Firebase App (base) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
+  <!-- Firebase Authentication -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"></script>
+  <!-- Firebase Storage -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"></script>
 </head>
 <body>
-    <div class="container">
-        <button id="addUserButton">Add User</button>
-        <div id="addUserForm" class="hidden">
-            <input type="text" id="name" placeholder="Name" required>
-            <input type="file" id="profilePic" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button id="submitUserButton">Submit</button>
-        </div>
-        <div id="loginForm" class="hidden">
-            <input type="text" id="loginName" placeholder="Name" required>
-            <input type="password" id="loginPassword" placeholder="Password" required>
-            <button id="loginButton">Login</button>
-        </div>
-        <div id="userPage" class="hidden">
-            <h1 id="userName"></h1>
-            <img id="userProfilePic" src="" alt="Profile Picture">
-            <button id="logoutButton">Logout</button>
-        </div>
-    </div>
+  <h1>Firebase Configuration</h1>
+  <form id="signupForm">
+    <input type="text" id="name" placeholder="Nom" required>
+    <input type="password" id="password" placeholder="Mot de passe" required>
+    <input type="file" id="profilePic" required>
+    <button type="submit">Submit</button>
+  </form>
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID",
+      measurementId: "YOUR_MEASUREMENT_ID"
+    };
 
-    <!-- Import Firebase SDKs -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const firestore = firebase.firestore();
+    const storage = firebase.storage();
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
-            authDomain: "last-9aee8.firebaseapp.com",
-            projectId: "last-9aee8",
-            storageBucket: "last-9aee8.appspot.com",
-            messagingSenderId: "543978749666",
-            appId: "1:543978749666:web:0587a84de496dd7073a8bb",
-            measurementId: "G-SCY61WX3QH"
-        };
+    // Form submission handler
+    document.getElementById('signupForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const storage = getStorage(app);
+      const name = document.getElementById('name').value;
+      const password = document.getElementById('password').value;
+      const profilePic = document.getElementById('profilePic').files[0];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const addUserButton = document.getElementById('addUserButton');
-            const addUserForm = document.getElementById('addUserForm');
-            const submitUserButton = document.getElementById('submitUserButton');
-            const loginForm = document.getElementById('loginForm');
-            const loginButton = document.getElementById('loginButton');
-            const userPage = document.getElementById('userPage');
-            const logoutButton = document.getElementById('logoutButton');
-            const userName = document.getElementById('userName');
-            const userProfilePic = document.getElementById('userProfilePic');
+      if (name && password && profilePic) {
+        try {
+          // Create a new user with email and password
+          const userCredential = await auth.createUserWithEmailAndPassword(`${name}@example.com`, password);
+          const user = userCredential.user;
 
-            addUserButton.addEventListener('click', () => {
-                addUserForm.classList.toggle('hidden');
-                loginForm.classList.add('hidden');
-                console.log('Add User button clicked');
-            });
+          // Reference to Firebase Storage and upload the profile picture
+          const storageRef = storage.ref(`profilePictures/${user.uid}`);
+          await storageRef.put(profilePic);
 
-            submitUserButton.addEventListener('click', async () => {
-                const name = document.getElementById('name').value;
-                const password = document.getElementById('password').value;
-                const profilePic = document.getElementById('profilePic').files[0];
+          // Get the profile picture URL
+          const profilePicURL = await storageRef.getDownloadURL();
+          console.log('Profile Picture URL:', profilePicURL);
 
-                console.log('Submit button clicked');
-                console.log('Name:', name);
-                console.log('Password:', password);
-                console.log('Profile Picture:', profilePic);
+          // Save user information to Firestore
+          await firestore.collection('users').doc(user.uid).set({
+            name: name,
+            profilePicURL: profilePicURL
+          });
 
-                if (name && password && profilePic) {
-                    try {
-                        // Create user with email and password
-                        console.log('Attempting to create user...');
-                        const userCredential = await createUserWithEmailAndPassword(auth, `${name}@example.com`, password);
-                        const user = userCredential.user;
-
-                        // Upload profile picture to Firebase Storage
-                        const storageRef = ref(storage, `profilePictures/${user.uid}`);
-                        await uploadBytes(storageRef, profilePic);
-
-                        // Get profile picture URL
-                        const profilePicURL = await getDownloadURL(storageRef);
-                        console.log('Profile Picture URL:', profilePicURL);
-
-                        // Display login form
-                        addUserForm.classList.add('hidden');
-                        loginForm.classList.remove('hidden');
-                    } catch (error) {
-                        console.error('Error adding user:', error);
-                    }
-                } else {
-                    alert('Please fill out all fields');
-                }
-            });
-
-            loginButton.addEventListener('click', async () => {
-                const loginName = document.getElementById('loginName').value;
-                const loginPassword = document.getElementById('loginPassword').value;
-
-                console.log('Login button clicked');
-                console.log('Login Name:', loginName);
-                console.log('Login Password:', loginPassword);
-
-                try {
-                    const userCredential = await signInWithEmailAndPassword(auth, `${loginName}@example.com`, loginPassword);
-                    const user = userCredential.user;
-                    const profilePicURL = await getDownloadURL(ref(storage, `profilePictures/${user.uid}`));
-
-                    userName.textContent = loginName;
-                    userProfilePic.src = profilePicURL;
-                    userPage.classList.remove('hidden');
-                    loginForm.classList.add('hidden');
-                } catch (error) {
-                    console.error('Error logging in:', error);
-                    alert('Login failed');
-                }
-            });
-
-            logoutButton.addEventListener('click', () => {
-                signOut(auth).then(() => {
-                    userPage.classList.add('hidden');
-                    loginForm.classList.remove('hidden');
-                });
-            });
-        });
-    </script>
+          alert('Utilisateur ajouté avec succès!');
+        } catch (error) {
+          console.error('Erreur:', error);
+          alert('Une erreur est survenue. Veuillez réessayer.');
+        }
+      } else {
+        alert('Veuillez remplir tous les champs.');
+      }
+    });
+  </script>
 </body>
 </html>
