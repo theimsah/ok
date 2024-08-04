@@ -3,26 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Example</title>
+  <title>Firebase Authentication</title>
   <!-- Firebase App (base) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
   <!-- Firebase Authentication -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"></script>
-  <!-- Firebase Firestore -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"></script>
-  <!-- Firebase Storage -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"></script>
 </head>
 <body>
-  <h1>Firebase Configuration</h1>
+  <h1>Firebase Authentication</h1>
+
+  <!-- Formulaire d'inscription -->
   <form id="signupForm">
-    <input type="text" id="name" placeholder="Nom" required>
+    <h2>Inscription</h2>
+    <input type="email" id="email" placeholder="Email" required>
     <input type="password" id="password" placeholder="Mot de passe" required>
-    <input type="file" id="profilePic" required>
-    <button type="submit">Submit</button>
+    <button type="submit">S'inscrire</button>
   </form>
-  <script>
-    // Your web app's Firebase configuration
+
+  <!-- Formulaire de connexion -->
+  <form id="signinForm">
+    <h2>Connexion</h2>
+    <input type="email" id="signinEmail" placeholder="Email" required>
+    <input type="password" id="signinPassword" placeholder="Mot de passe" required>
+    <button type="submit">Se connecter</button>
+  </form>
+
+  <script type="module">
+    // Importer les modules nécessaires de Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // Configuration de Firebase
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_AUTH_DOMAIN",
@@ -33,47 +44,45 @@
       measurementId: "YOUR_MEASUREMENT_ID"
     };
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const firestore = firebase.firestore();
-    const storage = firebase.storage();
+    // Initialiser Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-    // Form submission handler
+    // Inscription
     document.getElementById('signupForm').addEventListener('submit', async (event) => {
       event.preventDefault();
-
-      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const profilePic = document.getElementById('profilePic').files[0];
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('Inscription réussie!');
+      } catch (error) {
+        console.error('Erreur d\'inscription:', error);
+        alert('Erreur d\'inscription : ' + error.message);
+      }
+    });
 
-      if (name && password && profilePic) {
-        try {
-          // Create a new user with email and password
-          const userCredential = await auth.createUserWithEmailAndPassword(`${name}@example.com`, password);
-          const user = userCredential.user;
+    // Connexion
+    document.getElementById('signinForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = document.getElementById('signinEmail').value;
+      const password = document.getElementById('signinPassword').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert('Connexion réussie!');
+      } catch (error) {
+        console.error('Erreur de connexion:', error);
+        alert('Erreur de connexion : ' + error.message);
+      }
+    });
 
-          // Reference to Firebase Storage and upload the profile picture
-          const storageRef = storage.ref(`profilePictures/${user.uid}`);
-          await storageRef.put(profilePic);
-
-          // Get the profile picture URL
-          const profilePicURL = await storageRef.getDownloadURL();
-          console.log('Profile Picture URL:', profilePicURL);
-
-          // Save user information to Firestore
-          await firestore.collection('users').doc(user.uid).set({
-            name: name,
-            profilePicURL: profilePicURL
-          });
-
-          alert('Utilisateur ajouté avec succès!');
-        } catch (error) {
-          console.error('Erreur:', error);
-          alert('Une erreur est survenue. Veuillez réessayer.');
-        }
+    // Écouter l'état de connexion
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('Utilisateur connecté:', user);
+        // Faites quelque chose avec l'utilisateur connecté
       } else {
-        alert('Veuillez remplir tous les champs.');
+        console.log('Aucun utilisateur connecté');
       }
     });
   </script>
