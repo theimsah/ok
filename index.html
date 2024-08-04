@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Activity Tracker</title>
-    <link rel= icon type= image/x-icon href="favicon-16x16.png">
+    <link rel="icon" type="image/x-icon" href="favicon-16x16.png">
     <script src="https://kit.fontawesome.com/7a37db3ea8.js" crossorigin="anonymous"></script>
     <style>
         body {
@@ -32,7 +32,7 @@
             display: block;
             margin-bottom: 5px;
         }
-        input[type="number"], input[type="checkbox"] {
+        input[type="number"], input[type="checkbox"], input[type="email"], input[type="password"] {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
@@ -84,17 +84,19 @@
         .jour {
             font-size: 20px;
         }
-
         .button-container {
-    display: flex; /* Utilise Flexbox pour l'alignement */
-    justify-content: center; /* Centre les boutons horizontalement */
-    gap: 2px; /* Espace entre les boutons */
-}
-
-
-.logout{background-color: rgb(143, 30, 30); margin-top:0px;width:33px;}
-.logout:hover{background-color: rgba(143, 30, 30, 0.822);}
-
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+        }
+        .logout {
+            background-color: rgb(143, 30, 30);
+            margin-top: 0px;
+            width: 33px;
+        }
+        .logout:hover {
+            background-color: rgba(143, 30, 30, 0.822);
+        }
         #chart-container {
             margin-top: 20px;
             text-align: center;
@@ -103,29 +105,51 @@
             max-width: 100%;
             height: 400px;
         }
-        #user-selection, #tracker-container, #add-user-container {
+        #user-selection, #tracker-container, #add-user-container, #auth-container {
             display: none;
         }
-        #user-selection {
-            display: block;
+        .compterendu {
+            margin: 0px;
+            padding: 0px;
+            margin-top: 50px;
         }
-        .user-list button {
-            display: block;
-            margin: 5px 0;
-        }
-        #user-name-display {
-            text-align: center;
-            font-size: 24px;
+        textarea {
+            width: 100%;
+            height: 100px;
             margin-bottom: 20px;
+            resize: none;
         }
-
-.compterendu{margin:0px; padding:0px; margin-top:50px;}
-textarea{width:100%;height:100px;margin-bottom:20px;
- resize : none;
-}
     </style>
 </head>
 <body>
+    <!-- Authentication Container -->
+    <div id="auth-container">
+        <h1>Authentication</h1>
+        <div id="register-container">
+            <h2>Register</h2>
+            <div class="form-group">
+                <label for="registerEmail">Email:</label>
+                <input type="email" id="registerEmail">
+            </div>
+            <div class="form-group">
+                <label for="registerPassword">Password:</label>
+                <input type="password" id="registerPassword">
+            </div>
+            <button onclick="registerUser()">Register</button>
+        </div>
+        <div id="login-container">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label for="loginEmail">Email:</label>
+                <input type="email" id="loginEmail">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword">
+            </div>
+            <button onclick="loginUser()">Login</button>
+        </div>
+    </div>
 
     <!-- User Selection -->
     <div id="user-selection">
@@ -147,10 +171,8 @@ textarea{width:100%;height:100px;margin-bottom:20px;
 
     <!-- Tracker Container -->
     <div id="tracker-container" class="container">
-
         <button onclick="logout()" class="logout"><i class="fa-solid fa-right-from-bracket"></i></button>
-        
-        <h1 id="user-name-display"></h1> <!-- Ajouté -->
+        <h1 id="user-name-display"></h1>
         <h1>Daily Activity Tracker</h1>
         <div class="result" id="result">Total Points: 0</div>
         <div class="form-group">
@@ -177,140 +199,124 @@ textarea{width:100%;height:100px;margin-bottom:20px;
             <label for="alimentationSaine">Alimentation saine:</label>
             <input type="checkbox" id="alimentationSaine">
         </div>
-
-        <p class="compterendu">Compte rendue (facultatif) :</p>
+        <p class="compterendu">Compte rendu (facultatif) :</p>
         <form id="contact-form">
             <br>
             <label for="message"></label>
             <textarea id="message" name="message" required placeholder="Un compte rendu ? Une réclamation de point supplémentaire ?"></textarea>
             <br>
-            <!-- <button type="submit">Envoyer</button>-->
         </form>
-
         <form id="contacts-form">
-        <div class="button-container">
-        <button onclick="submitDailyData()" type="submit">Submit</button>
-        <button class="undo-button" onclick="undoLastSubmission()"><i class="fa-solid fa-backward"></i></button>
-        </div>
+            <div class="button-container">
+                <button onclick="submitDailyData()" type="submit">Submit</button>
+                <button class="undo-button" onclick="undoLastSubmission()"><i class="fa-solid fa-backward"></i></button>
+            </div>
         </form>
-
         <button onclick="showChart()">Show Chart</button>
         <div class="points-earned" id="points-earned">0 points</div>
         <div class="jour" id="jour">Jour: 0</div>
         <div id="chart-container" style="display:none;">
             <canvas id="chart"></canvas>
         </div>
-
     </div>
 
-    <script>
-        let currentUser = null;
-        let totalPoints = 0;
-        let dailyPointsHistory = [];
-        let submitCount = 0;
-        let undoClickCount = 0;
-        let chart = null;
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-        
-        function loadUserData() {
-            const storedUsers = localStorage.getItem('users');
-            if (!storedUsers) {
-                localStorage.setItem('users', JSON.stringify({}));
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
+            authDomain: "last-9aee8.firebaseapp.com",
+            databaseURL: "https://last-9aee8-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "last-9aee8",
+            storageBucket: "last-9aee8.appspot.com",
+            messagingSenderId: "543978749666",
+            appId: "1:543978749666:web:0587a84de496dd7073a8bb",
+            measurementId: "G-SCY61WX3QH"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+
+        // Register User
+        async function registerUser() {
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                alert('User registered successfully!');
+                console.log('User registered:', userCredential.user);
+            } catch (error) {
+                console.error('Error registering user:', error);
+                alert(`Error: ${error.message}`);
             }
-            updateUserList();
         }
 
-        function updateUserList() {
-            const users = JSON.parse(localStorage.getItem('users'));
-            const userList = document.getElementById('userList');
-            userList.innerHTML = '';
-            for (const user in users) {
-                const userButton = document.createElement('button');
-                userButton.textContent = user;
-                userButton.onclick = () => selectUser(user);
-                userList.appendChild(userButton);
+        // Login User
+        async function loginUser() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                alert('User logged in successfully!');
+                console.log('User logged in:', userCredential.user);
+                onUserLoggedIn(userCredential.user);
+            } catch (error) {
+                console.error('Error logging in user:', error);
+                alert(`Error: ${error.message}`);
             }
         }
 
-        function addUser() {
-            const userName = document.getElementById('userName').value.trim();
-            if (!userName) {
-                alert('Please enter a user name.');
-                return;
+        // On User Logged In
+        function onUserLoggedIn(user) {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('user-selection').style.display = 'block';
+            document.getElementById('user-name-display').textContent = `Welcome, ${user.email}`;
+            // Load user-specific data here if needed
+        }
+
+        // Logout User
+        async function logout() {
+            try {
+                await signOut(auth);
+                alert('User logged out successfully!');
+                document.getElementById('auth-container').style.display = 'block';
+                document.getElementById('user-selection').style.display = 'none';
+                document.getElementById('tracker-container').style.display = 'none';
+            } catch (error) {
+                console.error('Error logging out user:', error);
+                alert(`Error: ${error.message}`);
             }
+        }
 
-            const users = JSON.parse(localStorage.getItem('users'));
-            if (users[userName]) {
-                alert('User already exists.');
-                return;
+        // Monitor Auth State Changes
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                onUserLoggedIn(user);
+            } else {
+                document.getElementById('auth-container').style.display = 'block';
+                document.getElementById('user-selection').style.display = 'none';
+                document.getElementById('tracker-container').style.display = 'none';
             }
-
-            users[userName] = { totalPoints: 0, dailyPointsHistory: [], submitCount: 0, undoClickCount: 0 };
-            localStorage.setItem('users', JSON.stringify(users));
-            updateUserList();
-            document.getElementById('userName').value = '';
-            document.getElementById('add-user-container').style.display = 'none';
-        }
-
-        function selectUser(user) {
-            currentUser = user;
-            document.getElementById('user-selection').style.display = 'none';
-            document.getElementById('tracker-container').style.display = 'block';
-            document.getElementById('user-name-display').textContent = `Bonjour, ${user}`; // Ajouté
-            loadUserSpecificData();
-        }
-
-        function loadUserSpecificData() {
-            const users = JSON.parse(localStorage.getItem('users'));
-            const userData = users[currentUser];
-            totalPoints = userData.totalPoints;
-            dailyPointsHistory = userData.dailyPointsHistory;
-            submitCount = userData.submitCount;
-            undoClickCount = userData.undoClickCount;
-            updateDisplay();
-            destroyChart(); // Assurez-vous de détruire le graphique précédent
-            createOrUpdateChart(); // Créez un nouveau graphique
-        }
-
-        function updateUserSpecificData() {
-            const users = JSON.parse(localStorage.getItem('users'));
-            users[currentUser] = { totalPoints, dailyPointsHistory, submitCount, undoClickCount };
-            localStorage.setItem('users', JSON.stringify(users));
-        }
-
-//------------------------------------------------------------------------------------------------------------------------------------------------
-        document.getElementById('contacts-form').addEventListener('submit', function(event) {
-    event.preventDefault(); // Empêche le rechargement de la page
-
-    // Récupération des données du formulaire
-    var templateParams = {
-        totalPoints: totalPoints,
-        user: currentUser,
-        points: dailyPointsHistory,
-        message: document.getElementById('message').value,
-    };
-
-    // Envoi de l'email
-    emailjs.send('service_7iuucrp', 'template_ae3w2ni', templateParams)
-        .then(function(response) {
-           console.log('SUCCESS!', response.status, response.text);
-           alert('À bientot, et que le meilleur gagne');
-        }, function(error) {
-           console.log('FAILED...', error);
-           alert('Erreur lors de l\'envoi. Code d\'erreur: ' + error.status + ', Message: ' + error.text);
         });
-});
-//-----------------------------------------------------------------------------------------------------------------------------------------------
+    </script>
 
-        function updateDisplay() {
-            document.getElementById('result').textContent = `Total Points: ${totalPoints}`;
-            document.getElementById('points-earned').textContent = `${dailyPointsHistory[dailyPointsHistory.length - 1] || 0} points`;
-            document.getElementById('jour').textContent = `Jour: ${submitCount}`;
-        }
-        
-        function submitDailyData() {
-            submitCount += 1;
-            undoClickCount = 0;
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const pointsEarnedElement = document.getElementById('points-earned');
+        const dayCountElement = document.getElementById('jour');
+        let totalPoints = 0;
+        let dayCount = 0;
+        const history = [];
+
+        function calculatePoints() {
             const sportHours = parseInt(document.getElementById('sportHours').value) || 0;
             const revisionHours = parseInt(document.getElementById('revisionHours').value) || 0;
             const travailHours = parseInt(document.getElementById('travailHours').value) || 0;
@@ -318,129 +324,80 @@ textarea{width:100%;height:100px;margin-bottom:20px;
             const lectureHours = parseInt(document.getElementById('lectureHours').value) || 0;
             const alimentationSaine = document.getElementById('alimentationSaine').checked;
 
-            let points = 0;
-            points += sportHours * 20;
-            points += revisionHours * 10;
-            points += travailHours * 10;
-            if (pratiqueReligieuse) points += 5;
-            if (!pratiqueReligieuse) {
-        points = 0; 
-        alert("Vous n'avez pas effectué la pratique religieuse. Le total de points est zéro.");
-    }
+            const totalPoints = (sportHours * 10) + (revisionHours * 15) + (travailHours * 10) + (pratiqueReligieuse ? 10 : 0) + (lectureHours * 10) + (alimentationSaine ? 10 : 0);
 
-            points += lectureHours * 8;
-            if (alimentationSaine) points += 4;
+            return totalPoints;
+        }
 
+        function submitDailyData() {
+            const points = calculatePoints();
             totalPoints += points;
-            dailyPointsHistory.push(points);
+            dayCount++;
 
+            pointsEarnedElement.textContent = `${points} points`;
+            dayCountElement.textContent = `Jour: ${dayCount}`;
+            document.getElementById('result').textContent = `Total Points: ${totalPoints}`;
+
+            history.push({ day: dayCount, points });
+
+            alert('Daily data submitted successfully!');
+            resetForm();
+        }
+
+        function resetForm() {
             document.getElementById('sportHours').value = '';
             document.getElementById('revisionHours').value = '';
             document.getElementById('travailHours').value = '';
             document.getElementById('pratiqueReligieuse').checked = false;
             document.getElementById('lectureHours').value = '';
             document.getElementById('alimentationSaine').checked = false;
-
-            updateUserSpecificData();
-            updateDisplay();
-            destroyChart(); // Assurez-vous de détruire le graphique précédent
-            createOrUpdateChart(); // Créez un nouveau graphique
+            document.getElementById('message').value = '';
         }
 
         function undoLastSubmission() {
-            if (dailyPointsHistory.length === 0) return;
-            dailyPointsHistory.pop();
-            totalPoints = dailyPointsHistory.reduce((a, b) => a + b, 0);
-            submitCount -= 1;
-            undoClickCount += 1;
-            updateUserSpecificData();
-            updateDisplay();
-            destroyChart(); // Assurez-vous de détruire le graphique précédent
-            createOrUpdateChart(); // Créez un nouveau graphique
-        }
+            if (history.length > 0) {
+                const lastEntry = history.pop();
+                totalPoints -= lastEntry.points;
+                dayCount--;
 
-        function createOrUpdateChart() {
-            const ctx = document.getElementById('chart').getContext('2d');
-            if (chart) {
-                chart.data.labels = dailyPointsHistory.map((_, index) => `Jour ${index + 1}`);
-                chart.data.datasets[0].data = dailyPointsHistory;
-                chart.update();
+                pointsEarnedElement.textContent = `${lastEntry.points} points annulés`;
+                dayCountElement.textContent = `Jour: ${dayCount}`;
+                document.getElementById('result').textContent = `Total Points: ${totalPoints}`;
             } else {
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: dailyPointsHistory.map((_, index) => `Jour ${index + 1}`),
-                        datasets: [{
-                            label: 'Points Earned',
-                            data: dailyPointsHistory,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Days'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Points'
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        function destroyChart() {
-            if (chart) {
-                chart.destroy();
-                chart = null;
+                alert('No submission to undo!');
             }
         }
 
         function showChart() {
             const chartContainer = document.getElementById('chart-container');
-            if (chartContainer.style.display === 'block') {
-                chartContainer.style.display = 'none';
-                destroyChart();
-            } else {
-                chartContainer.style.display = 'block';
-                createOrUpdateChart();
-            }
-        }
+            const ctx = document.getElementById('chart').getContext('2d');
 
-        function logout() {
-            currentUser = null;
-            totalPoints = 0;
-            dailyPointsHistory = [];
-            submitCount = 0;
-            undoClickCount = 0;
-            document.getElementById('tracker-container').style.display = 'none';
-            document.getElementById('user-selection').style.display = 'block';
-            destroyChart(); // Assurez-vous de détruire le graphique précédent
-        }
+            const labels = history.map(entry => `Jour ${entry.day}`);
+            const data = history.map(entry => entry.points);
 
-        document.addEventListener('DOMContentLoaded', loadUserData);
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Inclusion de l'API EmailJS -->
-    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function(){
-            emailjs.init({
-                publicKey: "u9p3XfEiS_v9SudHp",
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Points Gagnés',
+                        data: data,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
             });
-        })();
+
+            chartContainer.style.display = 'block';
+        }
     </script>
 </body>
 </html>
