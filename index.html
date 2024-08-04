@@ -110,6 +110,7 @@
           document.getElementById('profile-section').style.display = 'block';
           document.getElementById('username').innerText = `Bonjour, ${user.email}`;
           loadActivities(user.uid);
+          updateTotalPoints(user.uid); // Met à jour les points totaux lors du chargement
         } else {
           document.getElementById('auth-section').style.display = 'block';
           document.getElementById('profile-section').style.display = 'none';
@@ -174,6 +175,15 @@
       });
     }
 
+    // Mettre à jour les points totaux
+    async function updateTotalPoints(userId) {
+      const today = new Date().toISOString().split('T')[0];
+      const dailyPointsRef = doc(firestore, 'dailyPoints', `${userId}_${today}`);
+      const dailyPointsDoc = await getDoc(dailyPointsRef);
+      const totalPoints = dailyPointsDoc.exists() ? dailyPointsDoc.data().points : 0;
+      document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       checkAuthState();
 
@@ -217,7 +227,7 @@
         const user = auth.currentUser;
         if (user) {
           const name = document.getElementById('activityName').value;
-          const points = document.getElementById('activityPoints').value;
+          const points = parseFloat(document.getElementById('activityPoints').value);
           const type = document.getElementById('activityType').value;
           await addActivity(user.uid, name, points, type);
         } else {
@@ -225,13 +235,12 @@
         }
       });
 
-      // Gérer la soumission du formulaire des activités
       document.getElementById('submitActivitiesBtn').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (user) {
           const activityForms = document.querySelectorAll('.activity-item');
           let totalPoints = 0;
-          
+
           for (const form of activityForms) {
             const id = form.getAttribute('data-id');
             const activityDoc = await getDoc(doc(firestore, 'activities', id));
@@ -247,18 +256,19 @@
             }
           }
 
-          // Attendre que toutes les mises à jour soient terminées
-          await new Promise(resolve => setTimeout(resolve, 500));
-
           // Afficher le total des points
           document.getElementById('totalPoints').innerText = `Total Points: ${totalPoints}`;
 
           // Mettre à jour les points totaux de l'utilisateur pour la journée
-          const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${new Date().toISOString().split('T')[0]}`);
+          const today = new Date().toISOString().split('T')[0];
+          const dailyPointsRef = doc(firestore, 'dailyPoints', `${user.uid}_${today}`);
           const dailyPointsDoc = await getDoc(dailyPointsRef);
           const previousPoints = dailyPointsDoc.exists() ? (dailyPointsDoc.data().points || 0) : 0;
           const newTotalPoints = previousPoints + totalPoints;
           await setDoc(dailyPointsRef, { points: newTotalPoints }, { merge: true });
+
+          // Mettre à jour l'affichage des points totaux
+          updateTotalPoints(user.uid);
         } else {
           alert('Vous devez être connecté pour soumettre les activités.');
         }
