@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Personnalisée</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
+      authDomain: "last-9aee8.firebaseapp.com",
+      projectId: "last-9aee8",
+      storageBucket: "last-9aee8.appspot.com",
+      messagingSenderId: "543978749666",
+      appId: "1:543978749666:web:0587a84de496dd7073a8bb",
+      measurementId: "G-SCY61WX3QH"
+    };
+
+    // Initialiser Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Vérifier l'état de connexion
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById('username').innerText = `Bonjour, ${user.email}`;
+      } else {
+        window.location.href = 'index.html'; // Rediriger vers la page d'accueil si non connecté
+      }
+    });
+
+    // Fonction de déconnexion
+    document.getElementById('signOutBtn').addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html'; // Rediriger vers la page d'accueil après déconnexion
+      } catch (error) {
+        console.error('Erreur de déconnexion:', error);
+      }
+    });
+  </script>
+</head>
+<body>
+  <h1>Page Personnalisée</h1>
+  <p id="username"></p>
+  <button id="signOutBtn">Se déconnecter</button>
+</body>
+</html>
