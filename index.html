@@ -48,9 +48,8 @@
       flex-direction: column;
       align-items: center;
     }
-    .activity-item input, .activity-item select {
-      width: auto;
-      display: inline-block;
+    .hours-only, .checkbox-only {
+      display: none;
     }
     .add-activity-btn {
       background-color: #424242;
@@ -72,9 +71,6 @@
     .add-activity-btn:hover {
       background-color: #616161;
     }
-    .hours-only, .checkbox-only {
-      display: none;
-    }
     .total-points {
       margin: 20px 0;
       font-size: 18px;
@@ -84,7 +80,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     // Configuration Firebase
     const firebaseConfig = {
@@ -146,18 +142,17 @@
         const data = doc.data();
         const activityElement = document.createElement('div');
         activityElement.className = 'activity-item';
+        activityElement.setAttribute('data-id', doc.id);
         activityElement.innerHTML = `
-          <div class="activity-form" data-id="${doc.id}">
-            <strong>${data.name}</strong><br>
-            <div class="hours-only">
-              <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
-            </div>
-            <div class="checkbox-only">
-              <label>
-                <input type="checkbox" class="checkbox-input">
-                Points par case cochée
-              </label>
-            </div>
+          <strong>${data.name}</strong><br>
+          <div class="hours-only">
+            <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
+          </div>
+          <div class="checkbox-only">
+            <label>
+              <input type="checkbox" class="checkbox-input">
+              Points par case cochée
+            </label>
           </div>
         `;
         // Afficher ou cacher les champs selon le type d'activité
@@ -274,7 +269,6 @@
         }
       });
 
-      // Afficher le formulaire d'ajout d'activité au clic sur le bouton "+"
       document.getElementById('addActivityBtn').addEventListener('click', () => {
         const form = document.getElementById('addActivityForm');
         form.style.display = form.style.display === 'none' ? 'block' : 'none';
