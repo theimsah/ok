@@ -32,7 +32,7 @@
             display: block;
             margin-bottom: 5px;
         }
-        input[type="number"], input[type="checkbox"], input[type="email"], input[type="password"] {
+        input[type="number"], input[type="checkbox"] {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
@@ -105,9 +105,6 @@
             max-width: 100%;
             height: 400px;
         }
-        #user-selection, #tracker-container, #add-user-container, #auth-container {
-            display: none;
-        }
         .compterendu {
             margin: 0px;
             padding: 0px;
@@ -122,53 +119,6 @@
     </style>
 </head>
 <body>
-    <!-- Authentication Container -->
-    <div id="auth-container">
-        <h1>Authentication</h1>
-        <div id="register-container">
-            <h2>Register</h2>
-            <div class="form-group">
-                <label for="registerEmail">Email:</label>
-                <input type="email" id="registerEmail">
-            </div>
-            <div class="form-group">
-                <label for="registerPassword">Password:</label>
-                <input type="password" id="registerPassword">
-            </div>
-            <button onclick="registerUser()">Register</button>
-        </div>
-        <div id="login-container">
-            <h2>Login</h2>
-            <div class="form-group">
-                <label for="loginEmail">Email:</label>
-                <input type="email" id="loginEmail">
-            </div>
-            <div class="form-group">
-                <label for="loginPassword">Password:</label>
-                <input type="password" id="loginPassword">
-            </div>
-            <button onclick="loginUser()">Login</button>
-        </div>
-    </div>
-
-    <!-- User Selection -->
-    <div id="user-selection">
-        <h1>Select User</h1>
-        <div class="user-list" id="userList"></div>
-        <button onclick="document.getElementById('add-user-container').style.display = 'block';">Add User</button>
-    </div>
-
-    <!-- Add User -->
-    <div id="add-user-container">
-        <h1>Add User</h1>
-        <div class="form-group">
-            <label for="userName">User Name:</label>
-            <input type="text" id="userName">
-        </div>
-        <button onclick="addUser()">Add</button>
-        <button onclick="document.getElementById('add-user-container').style.display = 'none';">Cancel</button>
-    </div>
-
     <!-- Tracker Container -->
     <div id="tracker-container" class="container">
         <button onclick="logout()" class="logout"><i class="fa-solid fa-right-from-bracket"></i></button>
@@ -219,94 +169,6 @@
             <canvas id="chart"></canvas>
         </div>
     </div>
-
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
-            authDomain: "last-9aee8.firebaseapp.com",
-            databaseURL: "https://last-9aee8-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "last-9aee8",
-            storageBucket: "last-9aee8.appspot.com",
-            messagingSenderId: "543978749666",
-            appId: "1:543978749666:web:0587a84de496dd7073a8bb",
-            measurementId: "G-SCY61WX3QH"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-
-        // Register User
-        async function registerUser() {
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                alert('User registered successfully!');
-                console.log('User registered:', userCredential.user);
-            } catch (error) {
-                console.error('Error registering user:', error);
-                alert(`Error: ${error.message}`);
-            }
-        }
-
-        // Login User
-        async function loginUser() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                alert('User logged in successfully!');
-                console.log('User logged in:', userCredential.user);
-                onUserLoggedIn(userCredential.user);
-            } catch (error) {
-                console.error('Error logging in user:', error);
-                alert(`Error: ${error.message}`);
-            }
-        }
-
-        // On User Logged In
-        function onUserLoggedIn(user) {
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('user-selection').style.display = 'block';
-            document.getElementById('user-name-display').textContent = `Welcome, ${user.email}`;
-            // Load user-specific data here if needed
-        }
-
-        // Logout User
-        async function logout() {
-            try {
-                await signOut(auth);
-                alert('User logged out successfully!');
-                document.getElementById('auth-container').style.display = 'block';
-                document.getElementById('user-selection').style.display = 'none';
-                document.getElementById('tracker-container').style.display = 'none';
-            } catch (error) {
-                console.error('Error logging out user:', error);
-                alert(`Error: ${error.message}`);
-            }
-        }
-
-        // Monitor Auth State Changes
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                onUserLoggedIn(user);
-            } else {
-                document.getElementById('auth-container').style.display = 'block';
-                document.getElementById('user-selection').style.display = 'none';
-                document.getElementById('tracker-container').style.display = 'none';
-            }
-        });
-    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
