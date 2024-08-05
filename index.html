@@ -135,7 +135,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
@@ -148,12 +148,10 @@
             measurementId: "G-SCY61WX3QH"
         };
 
-        // Initialiser Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const firestore = getFirestore(app);
 
-        // Vérifier l'état de connexion
         function checkAuthState() {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
@@ -168,7 +166,6 @@
             });
         }
 
-        // Ajouter une activité
         async function addActivity(userId, name, points, type) {
             try {
                 await addDoc(collection(firestore, 'activities'), {
@@ -186,17 +183,16 @@
             }
         }
 
-        // Charger les activités
         async function loadActivities(userId) {
             const activitiesContainer = document.getElementById('activities');
             activitiesContainer.innerHTML = '';
-            
+
             const q = query(collection(firestore, 'activities'), where('userId', '==', userId));
             const querySnapshot = await getDocs(q);
-            
+
             let totalPoints = 0;
             let totalDays = new Set();
-            
+
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 const activityElement = document.createElement('div');
@@ -204,10 +200,10 @@
                 activityElement.innerHTML = `
                     <div class="activity-form" data-id="${doc.id}">
                         <strong>${data.name}</strong><br>
-                        <div class="hours-only">
+                        <div class="hours-only" style="display:${data.type === 'hours' ? 'block' : 'none'};">
                             <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
                         </div>
-                        <div class="checkbox-only">
+                        <div class="checkbox-only" style="display:${data.type === 'checkbox' ? 'block' : 'none'};">
                             <label>
                                 <input type="checkbox" class="checkbox-input">
                                 Points par case cochée
@@ -215,26 +211,12 @@
                         </div>
                     </div>
                 `;
-                const type = data.type;
-                const hoursOnly = activityElement.querySelector('.hours-only');
-                const checkboxOnly = activityElement.querySelector('.checkbox-only');
-                if (type === 'hours') {
-                    hoursOnly.style.display = 'block';
-                    checkboxOnly.style.display = 'none';
-                } else {
-                    hoursOnly.style.display = 'none';
-                    checkboxOnly.style.display = 'block';
-                }
                 activitiesContainer.appendChild(activityElement);
-                
-                // Calcul du total des points
+
                 totalPoints += data.points;
-                
-                // Ajouter la date de la soumission au Set pour compter les jours uniques
                 totalDays.add(new Date(data.createdAt.toDate()).toDateString());
             });
 
-            // Afficher les résultats
             document.querySelector('.points-earned').innerText = `Total Points: ${totalPoints}`;
             document.querySelector('.jour').innerText = `Nombre de jours: ${totalDays.size}`;
         }
