@@ -10,21 +10,26 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #121212;
+            color: #e0e0e0;
             margin: 0;
             padding: 20px;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: #fff;
+            background: #1e1e1e;
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             border-radius: 10px;
         }
         h1 {
             text-align: center;
             margin-bottom: 20px;
+            color: #bb86fc;
+        }
+        h2 {
+            color: #bb86fc;
         }
         .form-group {
             margin-bottom: 15px;
@@ -33,19 +38,23 @@
             display: block;
             margin-bottom: 5px;
         }
-        input[type="number"], input[type="checkbox"], input[type="text"] {
+        input[type="email"], input[type="password"], input[type="text"], input[type="number"], textarea {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             box-sizing: border-box;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 5px;
+            color: #e0e0e0;
         }
-        input[type="checkbox"] {
-            width: auto;
+        input[type="radio"], input[type="checkbox"] {
+            margin-right: 5px;
         }
         button {
             width: 100%;
             padding: 10px;
-            background: #28a745;
-            color: #fff;
+            background: #03dac5;
+            color: #121212;
             border: none;
             cursor: pointer;
             border-radius: 5px;
@@ -53,114 +62,55 @@
             margin-bottom: 10px;
         }
         button:hover {
-            background: #218838;
+            background: #018786;
         }
-        .undo-button {
-            width: auto;
-            padding: 5px;
-            background: #6c6f72;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-bottom: 10px;
-            display: inline-block;
-            text-align: center;
-        }
-        .undo-button:hover {
-            background: #44474b;
-        }
-        .result, .points-earned, .jour {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-        }
-        .result {
-            font-size: 24px;
-        }
-        .points-earned {
-            font-size: 20px;
-        }
-        .jour {
-            font-size: 20px;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 2px;
-        }
-
         .logout {
-            background-color: rgb(143, 30, 30);
-            margin-top: 0px;
-            width: 33px;
+            background: #cf6679;
+            width: auto;
+            display: inline-block;
+            padding: 5px 10px;
+            margin-top: 20px;
         }
         .logout:hover {
-            background-color: rgba(143, 30, 30, 0.822);
+            background: #b00020;
         }
-
-        #chart-container {
-            margin-top: 20px;
-            text-align: center;
+        .activity-item {
+            background: #2c2c2c;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
         }
-        #chart {
-            max-width: 100%;
-            height: 400px;
+        .activity-item strong {
+            color: #bb86fc;
         }
-        #user-selection, #tracker-container, #add-user-container {
-            display: none;
+        #calculatePointsBtn {
+            background: #bb86fc;
+            color: #121212;
         }
-        #user-selection {
-            display: block;
-        }
-        .user-list button {
-            display: block;
-            margin: 5px 0;
-        }
-        #user-name-display {
-            text-align: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
-        .compterendu {
-            margin: 0px;
-            padding: 0px;
-            margin-top: 50px;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-            margin-bottom: 20px;
-            resize: none;
+        #calculatePointsBtn:hover {
+            background: #3700b3;
         }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
-  authDomain: "last-9aee8.firebaseapp.com",
-  databaseURL: "https://last-9aee8-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "last-9aee8",
-  storageBucket: "last-9aee8.appspot.com",
-  messagingSenderId: "543978749666",
-  appId: "1:543978749666:web:0587a84de496dd7073a8bb",
-  measurementId: "G-SCY61WX3QH"
-};
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-auth-domain",
+            projectId: "your-project-id",
+            storageBucket: "your-storage-bucket",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "your-app-id",
+            measurementId: "your-measurement-id"
+        };
 
-        // Initialiser Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const firestore = getFirestore(app);
 
-        // Vérifier l'état de connexion
         function checkAuthState() {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
@@ -175,7 +125,6 @@ const firebaseConfig = {
             });
         }
 
-        // Ajouter une activité
         async function addActivity(userId, name, points, type) {
             try {
                 await addDoc(collection(firestore, 'activities'), {
@@ -193,7 +142,6 @@ const firebaseConfig = {
             }
         }
 
-        // Charger les activités
         async function loadActivities(userId) {
             const activitiesContainer = document.getElementById('activities');
             activitiesContainer.innerHTML = '';
@@ -294,10 +242,10 @@ const firebaseConfig = {
                     const hoursInput = form.querySelector('.hours-input');
                     const checkboxInput = form.querySelector('.checkbox-input');
                     if (hoursInput && hoursInput.value) {
-                        totalPoints += parseFloat(hoursInput.value) * 10; // Points par heure
+                        totalPoints += parseFloat(hoursInput.value) * 10;
                     }
                     if (checkboxInput && checkboxInput.checked) {
-                        totalPoints += 10; // Points par case cochée
+                        totalPoints += 10;
                     }
                 }
                 alert(`Total Points: ${totalPoints}`);
@@ -338,7 +286,7 @@ const firebaseConfig = {
         </div>
     </section>
 
-    <section id="profile-section">
+    <section id="profile-section" style="display:none;">
         <div class="container">
             <h1>Tracker d'activités quotidiennes</h1>
             <p id="username"></p>
