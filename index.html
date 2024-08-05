@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,26 +5,25 @@
     <title>Daily Activity Tracker</title>
     <link rel="icon" type="image/x-icon" href="favicon-16x16.png">
     <script src="https://kit.fontawesome.com/7a37db3ea8.js" crossorigin="anonymous"></script>
-    
+
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #121212; /* Couleur d'arrière-plan sombre */
-            color: #e0e0e0; /* Couleur du texte */
+            background-color: #f4f4f4;
             margin: 0;
             padding: 20px;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: #1e1e1e; /* Gris foncé pour le conteneur */
+            background: #fff;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
-        h1, h2 {
+        h1 {
             text-align: center;
-            color: #bb86fc; /* Couleur violet clair */
+            margin-bottom: 20px;
         }
         .form-group {
             margin-bottom: 15px;
@@ -34,60 +32,108 @@
             display: block;
             margin-bottom: 5px;
         }
-        input[type="email"], input[type="password"], input[type="text"], input[type="number"], textarea {
+        input[type="number"], input[type="checkbox"], input[type="text"] {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             box-sizing: border-box;
-            background: #333; /* Gris très foncé pour les champs de saisie */
-            border: 1px solid #444; /* Bordure gris foncé */
-            border-radius: 4px;
-            color: #e0e0e0;
         }
-        input[type="radio"], input[type="checkbox"] {
-            margin-right: 5px;
+        input[type="checkbox"] {
+            width: auto;
         }
         button {
             width: 100%;
             padding: 10px;
-            background: #bb86fc; /* Couleur violet clair pour les boutons */
-            color: #121212; /* Couleur du texte des boutons */
+            background: #28a745;
+            color: #fff;
             border: none;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 5px;
             font-size: 16px;
             margin-bottom: 10px;
         }
         button:hover {
-            background: #9e66cc; /* Couleur violet plus foncé au survol */
+            background: #218838;
         }
-        .logout {
-            background: #444; /* Couleur gris foncé pour le bouton de déconnexion */
+        .undo-button {
             width: auto;
+            padding: 5px;
+            background: #6c6f72;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 10px;
             display: inline-block;
-            padding: 5px 10px;
+            text-align: center;
+        }
+        .undo-button:hover {
+            background: #44474b;
+        }
+        .result, .points-earned, .jour {
+            text-align: center;
             margin-top: 20px;
+            font-size: 18px;
+        }
+        .result {
+            font-size: 24px;
+        }
+        .points-earned {
+            font-size: 20px;
+        }
+        .jour {
+            font-size: 20px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .logout {
+            background-color: rgb(143, 30, 30);
+            margin-top: 0px;
+            width: 33px;
         }
         .logout:hover {
-            background: #333; /* Couleur gris encore plus foncé au survol */
+            background-color: rgba(143, 30, 30, 0.822);
         }
-        .activity-item {
-            background: #333; /* Gris très foncé pour les éléments d'activité */
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+
+        #chart-container {
+            margin-top: 20px;
+            text-align: center;
         }
-        .activity-item strong {
-            color: #bb86fc; /* Couleur violet clair pour les titres d'activité */
+        #chart {
+            max-width: 100%;
+            height: 400px;
         }
-        #calculatePointsBtn {
-            background: #bb86fc; /* Couleur violet clair pour le bouton de calcul */
-            color: #121212;
+        #user-selection, #tracker-container, #add-user-container {
+            display: none;
         }
-        #calculatePointsBtn:hover {
-            background: #9e66cc; /* Couleur violet plus foncé au survol */
+        #user-selection {
+            display: block;
+        }
+        .user-list button {
+            display: block;
+            margin: 5px 0;
+        }
+        #user-name-display {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .compterendu {
+            margin: 0px;
+            padding: 0px;
+            margin-top: 50px;
         }
         textarea {
-            resize: vertical; /* Permet la redimension verticale uniquement */
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+            resize: none;
         }
     </style>
 
@@ -119,7 +165,7 @@ const firebaseConfig = {
                 if (user) {
                     document.getElementById('auth-section').style.display = 'none';
                     document.getElementById('profile-section').style.display = 'block';
-                    document.getElementById('username').innerText = `Bonjour, ${user.email}`;
+                    document.getElementById('username').innerText = Bonjour, ${user.email};
                     loadActivities(user.uid);
                 } else {
                     document.getElementById('auth-section').style.display = 'block';
@@ -156,7 +202,7 @@ const firebaseConfig = {
                 const data = doc.data();
                 const activityElement = document.createElement('div');
                 activityElement.className = 'activity-item';
-                activityElement.innerHTML = `
+                activityElement.innerHTML = 
                     <div class="activity-form" data-id="${doc.id}">
                         <strong>${data.name}</strong><br>
                         <div class="hours-only">
@@ -169,7 +215,7 @@ const firebaseConfig = {
                             </label>
                         </div>
                     </div>
-                `;
+                ;
                 const type = data.type;
                 const hoursOnly = activityElement.querySelector('.hours-only');
                 const checkboxOnly = activityElement.querySelector('.checkbox-only');
@@ -222,43 +268,44 @@ const firebaseConfig = {
                 }
             });
 
-            document.getElementById('addActivityForm').addEventListener('submit', async (event) => {
+            document.getElementById('addActivityForm').addEventListener('submit', (event) => {
                 event.preventDefault();
                 const user = auth.currentUser;
+                const name = document.getElementById('activityName').value;
+                const points = parseInt(document.getElementById('activityPoints').value, 10);
+                const type = document.querySelector('input[name="activityType"]:checked').value;
                 if (user) {
-                    const name = document.getElementById('activityName').value;
-                    const points = parseInt(document.getElementById('activityPoints').value, 10);
-                    const type = document.querySelector('input[name="activityType"]:checked').value;
-                    await addActivity(user.uid, name, points, type);
+                    addActivity(user.uid, name, points, type);
+                } else {
+                    alert('Utilisateur non connecté');
                 }
             });
 
             document.getElementById('calculatePointsBtn').addEventListener('click', async () => {
                 const user = auth.currentUser;
-                if (user) {
-                    const querySnapshot = await getDocs(query(collection(firestore, 'activities'), where('userId', '==', user.uid)));
-                    let totalPoints = 0;
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const activityElement = document.querySelector(`.activity-form[data-id="${doc.id}"]`);
-                        if (data.type === 'hours') {
-                            const hoursInput = activityElement.querySelector('.hours-input');
-                            if (hoursInput) {
-                                totalPoints += parseFloat(hoursInput.value) * data.points;
-                            }
-                        } else {
-                            const checkboxInput = activityElement.querySelector('.checkbox-input');
-                            if (checkboxInput && checkboxInput.checked) {
-                                totalPoints += data.points;
-                            }
-                        }
-                    });
-                    alert(`Total des points : ${totalPoints}`);
+                if (!user) {
+                    alert('Utilisateur non connecté');
+                    return;
                 }
+                let totalPoints = 0;
+                const activityForms = document.querySelectorAll('.activity-form');
+                for (let form of activityForms) {
+                    const hoursInput = form.querySelector('.hours-input');
+                    const checkboxInput = form.querySelector('.checkbox-input');
+                    if (hoursInput && hoursInput.value) {
+                        totalPoints += parseFloat(hoursInput.value) * 10; // Points par heure
+                    }
+                    if (checkboxInput && checkboxInput.checked) {
+                        totalPoints += 10; // Points par case cochée
+                    }
+                }
+                alert(Total Points: ${totalPoints});
+                await setDoc(doc(firestore, 'points', user.uid), { totalPoints }, { merge: true });
             });
         });
     </script>
 </head>
+
 <body>
     <section id="auth-section">
         <div class="container">
@@ -290,7 +337,7 @@ const firebaseConfig = {
         </div>
     </section>
 
-    <section id="profile-section" style="display:none;">
+    <section id="profile-section">
         <div class="container">
             <h1>Tracker d'activités quotidiennes</h1>
             <p id="username"></p>
