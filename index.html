@@ -6,7 +6,6 @@
     <title>Daily Activity Tracker</title>
     <link rel="icon" type="image/x-icon" href="favicon-16x16.png">
     <script src="https://kit.fontawesome.com/7a37db3ea8.js" crossorigin="anonymous"></script>
-
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,7 +32,7 @@
             display: block;
             margin-bottom: 5px;
         }
-        input[type="number"], input[type="checkbox"], input[type="text"] {
+        input[type="number"], input[type="checkbox"], input[type="text"], input[type="email"], input[type="password"] {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
@@ -85,13 +84,11 @@
         .jour {
             font-size: 20px;
         }
-
         .button-container {
             display: flex;
             justify-content: center;
             gap: 2px;
         }
-
         .logout {
             background-color: rgb(143, 30, 30);
             margin-top: 0px;
@@ -100,7 +97,6 @@
         .logout:hover {
             background-color: rgba(143, 30, 30, 0.822);
         }
-
         #chart-container {
             margin-top: 20px;
             text-align: center;
@@ -124,7 +120,6 @@
             font-size: 24px;
             margin-bottom: 20px;
         }
-
         .compterendu {
             margin: 0px;
             padding: 0px;
@@ -137,23 +132,21 @@
             resize: none;
         }
     </style>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-       // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
-  authDomain: "last-9aee8.firebaseapp.com",
-  databaseURL: "https://last-9aee8-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "last-9aee8",
-  storageBucket: "last-9aee8.appspot.com",
-  messagingSenderId: "543978749666",
-  appId: "1:543978749666:web:0587a84de496dd7073a8bb",
-  measurementId: "G-SCY61WX3QH"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
+            authDomain: "last-9aee8.firebaseapp.com",
+            databaseURL: "https://last-9aee8-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "last-9aee8",
+            storageBucket: "last-9aee8.appspot.com",
+            messagingSenderId: "543978749666",
+            appId: "1:543978749666:web:0587a84de496dd7073a8bb",
+            measurementId: "G-SCY61WX3QH"
+        };
 
         // Initialiser Firebase
         const app = initializeApp(firebaseConfig);
@@ -197,8 +190,13 @@ const firebaseConfig = {
         async function loadActivities(userId) {
             const activitiesContainer = document.getElementById('activities');
             activitiesContainer.innerHTML = '';
+            
             const q = query(collection(firestore, 'activities'), where('userId', '==', userId));
             const querySnapshot = await getDocs(q);
+            
+            let totalPoints = 0;
+            let totalDays = new Set();
+            
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 const activityElement = document.createElement('div');
@@ -228,7 +226,17 @@ const firebaseConfig = {
                     checkboxOnly.style.display = 'block';
                 }
                 activitiesContainer.appendChild(activityElement);
+                
+                // Calcul du total des points
+                totalPoints += data.points;
+                
+                // Ajouter la date de la soumission au Set pour compter les jours uniques
+                totalDays.add(new Date(data.createdAt.toDate()).toDateString());
             });
+
+            // Afficher les résultats
+            document.querySelector('.points-earned').innerText = `Total Points: ${totalPoints}`;
+            document.querySelector('.jour').innerText = `Nombre de jours: ${totalDays.size}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -247,72 +255,58 @@ const firebaseConfig = {
                 }
             });
 
-            document.getElementById('signinForm').addEventListener('submit', async (event) => {
+            document.getElementById('loginForm').addEventListener('submit', async (event) => {
                 event.preventDefault();
-                const email = document.getElementById('signinEmail').value;
-                const password = document.getElementById('signinPassword').value;
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
-                    alert('Connexion réussie !');
                 } catch (error) {
                     console.error('Erreur de connexion:', error);
                     alert('Erreur de connexion : ' + error.message);
                 }
             });
 
+            document.getElementById('addActivityForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const activityName = document.getElementById('activityName').value;
+                const activityPoints = parseInt(document.getElementById('activityPoints').value);
+                const activityType = document.querySelector('input[name="activityType"]:checked').value;
+                const user = auth.currentUser;
+                if (user) {
+                    await addActivity(user.uid, activityName, activityPoints, activityType);
+                }
+            });
+
             document.getElementById('signOutBtn').addEventListener('click', async () => {
                 try {
                     await signOut(auth);
-                    alert('Déconnexion réussie !');
                 } catch (error) {
                     console.error('Erreur de déconnexion:', error);
+                    alert('Erreur de déconnexion : ' + error.message);
                 }
-            });
-
-            document.getElementById('addActivityForm').addEventListener('submit', (event) => {
-                event.preventDefault();
-                const user = auth.currentUser;
-                const name = document.getElementById('activityName').value;
-                const points = parseInt(document.getElementById('activityPoints').value, 10);
-                const type = document.querySelector('input[name="activityType"]:checked').value;
-                if (user) {
-                    addActivity(user.uid, name, points, type);
-                } else {
-                    alert('Utilisateur non connecté');
-                }
-            });
-
-            document.getElementById('calculatePointsBtn').addEventListener('click', async () => {
-                const user = auth.currentUser;
-                if (!user) {
-                    alert('Utilisateur non connecté');
-                    return;
-                }
-                let totalPoints = 0;
-                const activityForms = document.querySelectorAll('.activity-form');
-                for (let form of activityForms) {
-                    const hoursInput = form.querySelector('.hours-input');
-                    const checkboxInput = form.querySelector('.checkbox-input');
-                    if (hoursInput && hoursInput.value) {
-                        totalPoints += parseFloat(hoursInput.value) * 10; // Points par heure
-                    }
-                    if (checkboxInput && checkboxInput.checked) {
-                        totalPoints += 10; // Points par case cochée
-                    }
-                }
-                alert(`Total Points: ${totalPoints}`);
-                await setDoc(doc(firestore, 'points', user.uid), { totalPoints }, { merge: true });
             });
         });
     </script>
 </head>
-
 <body>
-    <section id="auth-section">
+    <div id="auth-section">
         <div class="container">
-            <h1>Tracker d'activités quotidiennes</h1>
+            <h1>Connexion / Inscription</h1>
+            <form id="loginForm">
+                <h2>Se connecter</h2>
+                <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Mot de passe:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit">Se connecter</button>
+            </form>
             <form id="signupForm">
-                <h2>Inscription</h2>
+                <h2>S'inscrire</h2>
                 <div class="form-group">
                     <label for="signupEmail">Email:</label>
                     <input type="email" id="signupEmail" required>
@@ -323,20 +317,8 @@ const firebaseConfig = {
                 </div>
                 <button type="submit">S'inscrire</button>
             </form>
-            <form id="signinForm">
-                <h2>Connexion</h2>
-                <div class="form-group">
-                    <label for="signinEmail">Email:</label>
-                    <input type="email" id="signinEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="signinPassword">Mot de passe:</label>
-                    <input type="password" id="signinPassword" required>
-                </div>
-                <button type="submit">Se connecter</button>
-            </form>
         </div>
-    </section>
+    </div>
 
     <section id="profile-section">
         <div class="container">
@@ -362,7 +344,8 @@ const firebaseConfig = {
             </form>
             <h2>Activités</h2>
             <div id="activities"></div>
-            <button id="calculatePointsBtn">Calculer les points</button>
+            <div class="result points-earned"></div>
+            <div class="result jour"></div>
         </div>
     </section>
 </body>
