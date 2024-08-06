@@ -7,73 +7,148 @@
     <link rel="icon" type="image/x-icon" href="favicon-16x16.png">
     <script src="https://kit.fontawesome.com/7a37db3ea8.js" crossorigin="anonymous"></script>
     <style>
-        /* Styles inchangés */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f3;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4a90e2;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="email"], input[type="password"], input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #357ABD;
+        }
+
+        .logout {
+            background-color: #ff4c4c;
+            width: 50px;
+            padding: 5px;
+            text-align: center;
+            border-radius: 50%;
+            font-size: 18px;
+            display: inline-block;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .logout:hover {
+            background-color: #e43f3f;
+        }
+
+        .points-display {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #28a745;
+        }
+
+        .result, .points-earned, .jour {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #chart-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #chart {
+            max-width: 100%;
+            height: 400px;
+        }
+
+        #user-selection, #tracker-container, #add-user-container {
+            display: none;
+        }
+
+        #user-selection {
+            display: block;
+        }
+
+        .user-list button {
+            display: block;
+            margin: 5px 0;
+        }
+
+        #user-name-display {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .compterendu {
+            margin: 0px;
+            padding: 0px;
+            margin-top: 50px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+            resize: none;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
+        }
     </style>
-</head>
-<body>
-    <section id="auth-section">
-        <div class="container">
-            <h1>Tracker d'activités quotidiennes</h1>
-            <form id="signupForm">
-                <h2>Inscription</h2>
-                <div class="form-group">
-                    <label for="signupEmail">Email:</label>
-                    <input type="email" id="signupEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="signupPassword">Mot de passe:</label>
-                    <input type="password" id="signupPassword" required>
-                </div>
-                <button type="submit">S'inscrire</button>
-            </form>
-            <form id="signinForm">
-                <h2>Connexion</h2>
-                <div class="form-group">
-                    <label for="signinEmail">Email:</label>
-                    <input type="email" id="signinEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="signinPassword">Mot de passe:</label>
-                    <input type="password" id="signinPassword" required>
-                </div>
-                <button type="submit">Se connecter</button>
-            </form>
-        </div>
-    </section>
-
-    <section id="profile-section">
-        <div class="container">
-            <h1>Tracker d'activités quotidiennes</h1>
-            <div class="button-container">
-                <p id="username"></p>
-                <button id="signOutBtn" class="logout"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
-            <div id="jour" class="jour">Jour : 0</div>
-            <div id="points-journalier" class="points-earned">Points journaliers : 0</div>
-            <div id="points-total" class="result">Points totaux : 0</div>
-            <form id="addActivityForm">
-                <h2>Ajouter une activité</h2>
-                <div class="form-group">
-                    <label for="activityName">Nom de l'activité:</label>
-                    <input type="text" id="activityName" required>
-                </div>
-                <div class="form-group">
-                    <label for="activityPoints">Points:</label>
-                    <input type="number" id="activityPoints" required>
-                </div>
-                <div class="form-group">
-                    <label>Type d'activité:</label>
-                    <label><input type="radio" name="activityType" value="hours" checked> Nombre d'heures</label>
-                    <label><input type="radio" name="activityType" value="checkbox"> Cocher la case</label>
-                </div>
-                <button type="submit">Ajouter l'activité</button>
-            </form>
-            <h2>Activités</h2>
-            <div id="activities"></div>
-            <button id="calculatePointsBtn">Calculer les points</button>
-        </div>
-    </section>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -94,49 +169,28 @@
         const auth = getAuth(app);
         const firestore = getFirestore(app);
 
-        async function updateUserStats(userId, points) {
-            const userDocRef = doc(firestore, 'userStats', userId);
-            const userDoc = await getDoc(userDocRef);
-            let userData;
-            if (userDoc.exists()) {
-                userData = userDoc.data();
-                userData.totalDays += 1;
-                userData.dailyPoints = points;
-                userData.totalPoints += points;
-            } else {
-                userData = {
-                    totalDays: 1,
-                    dailyPoints: points,
-                    totalPoints: points
-                };
+        async function updatePointsDisplay(userId) {
+            try {
+                const docRef = doc(firestore, 'points', userId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    document.getElementById('points-display').innerText = `Total des points : ${docSnap.data().totalPoints || 0}`;
+                } else {
+                    document.getElementById('points-display').innerText = `Total des points : 0`;
+                }
+            } catch (error) {
+                console.error('Erreur de chargement des points:', error);
             }
-            await setDoc(userDocRef, userData);
-            displayUserStats(userData);
-        }
-
-        function displayUserStats(stats) {
-            document.getElementById('jour').innerText = `Jour : ${stats.totalDays}`;
-            document.getElementById('points-journalier').innerText = `Points journaliers : ${stats.dailyPoints}`;
-            document.getElementById('points-total').innerText = `Points totaux : ${stats.totalPoints}`;
         }
 
         function checkAuthState() {
-            onAuthStateChanged(auth, async (user) => {
+            onAuthStateChanged(auth, (user) => {
                 if (user) {
                     document.getElementById('auth-section').style.display = 'none';
                     document.getElementById('profile-section').style.display = 'block';
                     document.getElementById('username').innerText = `Bonjour, ${user.email}`;
-                    const userDoc = await getDoc(doc(firestore, 'userStats', user.uid));
-                    if (userDoc.exists()) {
-                        displayUserStats(userDoc.data());
-                    } else {
-                        displayUserStats({
-                            totalDays: 0,
-                            dailyPoints: 0,
-                            totalPoints: 0
-                        });
-                    }
                     loadActivities(user.uid);
+                    updatePointsDisplay(user.uid);
                 } else {
                     document.getElementById('auth-section').style.display = 'block';
                     document.getElementById('profile-section').style.display = 'none';
@@ -188,39 +242,57 @@
                 const hoursOnly = activityElement.querySelector('.hours-only');
                 const checkboxOnly = activityElement.querySelector('.checkbox-only');
                 if (type === 'hours') {
+                    hoursOnly.style.display = 'block';
                     checkboxOnly.style.display = 'none';
                 } else {
                     hoursOnly.style.display = 'none';
+                    checkboxOnly.style.display = 'block';
                 }
                 activitiesContainer.appendChild(activityElement);
             });
         }
 
-        window.addEventListener('load', () => {
-            checkAuthState();
+        async function calculateAndSavePoints(userId) {
+            let totalPoints = 0;
+            const activityForms = document.querySelectorAll('.activity-form');
+            for (let form of activityForms) {
+                const hoursInput = form.querySelector('.hours-input');
+                const checkboxInput = form.querySelector('.checkbox-input');
+                if (hoursInput && hoursInput.value) {
+                    totalPoints += parseFloat(hoursInput.value) * 10; // Points par heure
+                }
+                if (checkboxInput && checkboxInput.checked) {
+                    totalPoints += 10; // Points par case cochée
+                }
+            }
+            try {
+                await setDoc(doc(firestore, 'points', userId), { totalPoints });
+                updatePointsDisplay(userId);
+            } catch (error) {
+                console.error('Erreur de mise à jour des points:', error);
+                alert('Erreur de mise à jour des points : ' + error.message);
+            }
+        }
 
-            document.getElementById('signupForm').addEventListener('submit', async (event) => {
-                event.preventDefault();
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('signupForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
                 const email = document.getElementById('signupEmail').value;
                 const password = document.getElementById('signupPassword').value;
                 try {
                     await createUserWithEmailAndPassword(auth, email, password);
-                    alert('Inscription réussie !');
                 } catch (error) {
-                    console.error('Erreur d\'inscription:', error);
                     alert('Erreur d\'inscription : ' + error.message);
                 }
             });
 
-            document.getElementById('signinForm').addEventListener('submit', async (event) => {
-                event.preventDefault();
+            document.getElementById('signinForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
                 const email = document.getElementById('signinEmail').value;
                 const password = document.getElementById('signinPassword').value;
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
-                    alert('Connexion réussie !');
                 } catch (error) {
-                    console.error('Erreur de connexion:', error);
                     alert('Erreur de connexion : ' + error.message);
                 }
             });
@@ -228,47 +300,89 @@
             document.getElementById('signOutBtn').addEventListener('click', async () => {
                 try {
                     await signOut(auth);
-                    alert('Déconnexion réussie !');
                 } catch (error) {
-                    console.error('Erreur de déconnexion:', error);
+                    alert('Erreur de déconnexion : ' + error.message);
                 }
             });
 
-            document.getElementById('addActivityForm').addEventListener('submit', (event) => {
-                event.preventDefault();
-                const user = auth.currentUser;
+            document.getElementById('addActivityForm').addEventListener('submit', (e) => {
+                e.preventDefault();
                 const name = document.getElementById('activityName').value;
                 const points = parseInt(document.getElementById('activityPoints').value, 10);
                 const type = document.querySelector('input[name="activityType"]:checked').value;
-                if (user) {
-                    addActivity(user.uid, name, points, type);
-                } else {
-                    alert('Utilisateur non connecté');
-                }
+                const userId = auth.currentUser.uid;
+                addActivity(userId, name, points, type);
             });
 
-            document.getElementById('calculatePointsBtn').addEventListener('click', async () => {
-                const user = auth.currentUser;
-                if (!user) {
-                    alert('Utilisateur non connecté');
-                    return;
-                }
-                let totalPoints = 0;
-                const activityForms = document.querySelectorAll('.activity-form');
-                for (let form of activityForms) {
-                    const hoursInput = form.querySelector('.hours-input');
-                    const checkboxInput = form.querySelector('.checkbox-input');
-                    if (hoursInput && hoursInput.value) {
-                        totalPoints += parseFloat(hoursInput.value) * 10; // Points par heure
-                    }
-                    if (checkboxInput && checkboxInput.checked) {
-                        totalPoints += 10; // Points par case cochée
-                    }
-                }
-                alert(`Points journaliers : ${totalPoints}`);
-                await updateUserStats(user.uid, totalPoints);
+            document.getElementById('calculatePointsBtn').addEventListener('click', () => {
+                const userId = auth.currentUser.uid;
+                calculateAndSavePoints(userId);
             });
+
+            checkAuthState();
         });
     </script>
+</head>
+<body>
+    <section id="auth-section">
+        <div class="container">
+            <h1>Tracker d'activités quotidiennes</h1>
+            <form id="signupForm">
+                <h2>Inscription</h2>
+                <div class="form-group">
+                    <label for="signupEmail">Email:</label>
+                    <input type="email" id="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Mot de passe:</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <button type="submit">S'inscrire</button>
+            </form>
+            <form id="signinForm">
+                <h2>Connexion</h2>
+                <div class="form-group">
+                    <label for="signinEmail">Email:</label>
+                    <input type="email" id="signinEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="signinPassword">Mot de passe:</label>
+                    <input type="password" id="signinPassword" required>
+                </div>
+                <button type="submit">Se connecter</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="profile-section">
+        <div class="container">
+            <div id="points-display" class="points-display">Total des points : 0</div>
+            <h1>Tracker d'activités quotidiennes</h1>
+            <div class="button-container">
+                <p id="username"></p>
+                <button id="signOutBtn" class="logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+            <form id="addActivityForm">
+                <h2>Ajouter une activité</h2>
+                <div class="form-group">
+                    <label for="activityName">Nom de l'activité:</label>
+                    <input type="text" id="activityName" required>
+                </div>
+                <div class="form-group">
+                    <label for="activityPoints">Points:</label>
+                    <input type="number" id="activityPoints" required>
+                </div>
+                <div class="form-group">
+                    <label>Type d'activité:</label>
+                    <label><input type="radio" name="activityType" value="hours" checked> Nombre d'heures</label>
+                    <label><input type="radio" name="activityType" value="checkbox"> Cocher la case</label>
+                </div>
+                <button type="submit">Ajouter l'activité</button>
+            </form>
+            <h2>Activités</h2>
+            <div id="activities"></div>
+            <button id="calculatePointsBtn">Calculer les points</button>
+        </div>
+    </section>
 </body>
 </html>
