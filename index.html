@@ -6,45 +6,56 @@
     <title>Daily Activity Tracker</title>
     <link rel="icon" type="image/x-icon" href="favicon-16x16.png">
     <script src="https://kit.fontawesome.com/7a37db3ea8.js" crossorigin="anonymous"></script>
-
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f3;
             margin: 0;
             padding: 20px;
+            color: #333;
         }
+
         .container {
             max-width: 600px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
         }
-        h1 {
+
+        h1, h2 {
             text-align: center;
             margin-bottom: 20px;
+            color: #4a90e2;
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             margin-bottom: 5px;
+            font-weight: bold;
         }
-        input[type="number"], input[type="checkbox"], input[type="text"] {
+
+        input[type="email"], input[type="password"], input[type="text"], input[type="number"] {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             box-sizing: border-box;
         }
+
         input[type="checkbox"] {
             width: auto;
         }
+
         button {
             width: 100%;
             padding: 10px;
-            background: #28a745;
+            background: #4a90e2;
             color: #fff;
             border: none;
             cursor: pointer;
@@ -52,73 +63,69 @@
             font-size: 16px;
             margin-bottom: 10px;
         }
+
         button:hover {
-            background: #218838;
+            background: #357ABD;
         }
-        .undo-button {
-            width: auto;
+
+        .logout {
+            background-color: #ff4c4c;
+            width: 50px;
             padding: 5px;
-            background: #6c6f72;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-bottom: 10px;
-            display: inline-block;
             text-align: center;
+            border-radius: 50%;
+            font-size: 18px;
+            display: inline-block;
+            margin-left: 10px;
+            cursor: pointer;
         }
-        .undo-button:hover {
-            background: #44474b;
+
+        .logout:hover {
+            background-color: #e43f3f;
         }
+
+        .points-display {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #28a745;
+        }
+
         .result, .points-earned, .jour {
             text-align: center;
             margin-top: 20px;
             font-size: 18px;
         }
-        .result {
-            font-size: 24px;
-        }
-        .points-earned {
-            font-size: 20px;
-        }
-        .jour {
-            font-size: 20px;
-        }
 
         .button-container {
             display: flex;
             justify-content: center;
-            gap: 2px;
-        }
-
-        .logout {
-            background-color: rgb(143, 30, 30);
-            margin-top: 0px;
-            width: 33px;
-        }
-        .logout:hover {
-            background-color: rgba(143, 30, 30, 0.822);
+            gap: 10px;
         }
 
         #chart-container {
             margin-top: 20px;
             text-align: center;
         }
+
         #chart {
             max-width: 100%;
             height: 400px;
         }
+
         #user-selection, #tracker-container, #add-user-container {
             display: none;
         }
+
         #user-selection {
             display: block;
         }
+
         .user-list button {
             display: block;
             margin: 5px 0;
         }
+
         #user-name-display {
             text-align: center;
             font-size: 24px;
@@ -130,20 +137,18 @@
             padding: 0px;
             margin-top: 50px;
         }
+
         textarea {
             width: 100%;
             height: 100px;
             margin-bottom: 20px;
             resize: none;
-        }
-        .points-display {
-            text-align: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #28a745;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
         }
     </style>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -164,6 +169,35 @@
         const auth = getAuth(app);
         const firestore = getFirestore(app);
 
+        async function updatePointsDisplay(userId) {
+            try {
+                const docRef = doc(firestore, 'points', userId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    document.getElementById('points-display').innerText = `Total des points : ${docSnap.data().totalPoints || 0}`;
+                } else {
+                    document.getElementById('points-display').innerText = `Total des points : 0`;
+                }
+            } catch (error) {
+                console.error('Erreur de chargement des points:', error);
+            }
+        }
+
+        function checkAuthState() {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    document.getElementById('auth-section').style.display = 'none';
+                    document.getElementById('profile-section').style.display = 'block';
+                    document.getElementById('username').innerText = `Bonjour, ${user.email}`;
+                    loadActivities(user.uid);
+                    updatePointsDisplay(user.uid);
+                } else {
+                    document.getElementById('auth-section').style.display = 'block';
+                    document.getElementById('profile-section').style.display = 'none';
+                }
+            });
+        }
+
         async function addActivity(userId, name, points, type) {
             try {
                 await addDoc(collection(firestore, 'activities'), {
@@ -175,6 +209,7 @@
                 });
                 alert('Activité ajoutée !');
                 loadActivities(userId);
+                calculateAndSavePoints(userId); // Recalculer les points après ajout d'activité
             } catch (error) {
                 console.error('Erreur d\'ajout d\'activité:', error);
                 alert('Erreur d\'ajout d\'activité : ' + error.message);
@@ -240,47 +275,25 @@
             }
         }
 
-        async function updatePointsDisplay(userId) {
-            try {
-                const docRef = doc(firestore, 'points', userId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const pointsDisplay = document.getElementById('points-display');
-                    pointsDisplay.innerText = `Total Points: ${data.totalPoints || 0}`;
-                } else {
-                    console.log('No such document!');
-                }
-            } catch (error) {
-                console.error('Erreur de récupération des points:', error);
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            checkAuthState();
-
-            document.getElementById('signupForm').addEventListener('submit', async (event) => {
-                event.preventDefault();
+            document.getElementById('signupForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
                 const email = document.getElementById('signupEmail').value;
                 const password = document.getElementById('signupPassword').value;
                 try {
                     await createUserWithEmailAndPassword(auth, email, password);
-                    alert('Inscription réussie !');
                 } catch (error) {
-                    console.error('Erreur d\'inscription:', error);
                     alert('Erreur d\'inscription : ' + error.message);
                 }
             });
 
-            document.getElementById('signinForm').addEventListener('submit', async (event) => {
-                event.preventDefault();
+            document.getElementById('signinForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
                 const email = document.getElementById('signinEmail').value;
                 const password = document.getElementById('signinPassword').value;
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
-                    alert('Connexion réussie !');
                 } catch (error) {
-                    console.error('Erreur de connexion:', error);
                     alert('Erreur de connexion : ' + error.message);
                 }
             });
@@ -288,37 +301,29 @@
             document.getElementById('signOutBtn').addEventListener('click', async () => {
                 try {
                     await signOut(auth);
-                    alert('Déconnexion réussie !');
                 } catch (error) {
-                    console.error('Erreur de déconnexion:', error);
+                    alert('Erreur de déconnexion : ' + error.message);
                 }
             });
 
-            document.getElementById('addActivityForm').addEventListener('submit', (event) => {
-                event.preventDefault();
-                const user = auth.currentUser;
+            document.getElementById('addActivityForm').addEventListener('submit', (e) => {
+                e.preventDefault();
                 const name = document.getElementById('activityName').value;
                 const points = parseInt(document.getElementById('activityPoints').value, 10);
                 const type = document.querySelector('input[name="activityType"]:checked').value;
-                if (user) {
-                    addActivity(user.uid, name, points, type);
-                } else {
-                    alert('Utilisateur non connecté');
-                }
+                const userId = auth.currentUser.uid;
+                addActivity(userId, name, points, type);
             });
 
-            document.getElementById('calculatePointsBtn').addEventListener('click', async () => {
-                const user = auth.currentUser;
-                if (!user) {
-                    alert('Utilisateur non connecté');
-                    return;
-                }
-                await calculateAndSavePoints(user.uid);
+            document.getElementById('calculatePointsBtn').addEventListener('click', () => {
+                const userId = auth.currentUser.uid;
+                calculateAndSavePoints(userId);
             });
+
+            checkAuthState();
         });
     </script>
 </head>
-
 <body>
     <section id="auth-section">
         <div class="container">
@@ -352,9 +357,12 @@
 
     <section id="profile-section">
         <div class="container">
+            <div id="points-display" class="points-display">Total des points : 0</div>
             <h1>Tracker d'activités quotidiennes</h1>
-            <p id="username"></p>
-            <button id="signOutBtn" class="logout"><i class="fas fa-sign-out-alt"></i></button>
+            <div class="button-container">
+                <p id="username"></p>
+                <button id="signOutBtn" class="logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
             <form id="addActivityForm">
                 <h2>Ajouter une activité</h2>
                 <div class="form-group">
@@ -375,7 +383,6 @@
             <h2>Activités</h2>
             <div id="activities"></div>
             <button id="calculatePointsBtn">Calculer les points</button>
-            <div id="points-display" class="points-display">Total Points: 0</div>
         </div>
     </section>
 </body>
