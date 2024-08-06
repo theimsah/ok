@@ -148,6 +148,14 @@
             padding: 10px;
             box-sizing: border-box;
         }
+
+        .activity-item {
+            margin-bottom: 10px;
+        }
+
+        .activity-item div {
+            margin-bottom: 5px;
+        }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -169,18 +177,31 @@
         const auth = getAuth(app);
         const firestore = getFirestore(app);
 
-        async function updatePointsDisplay(userId) {
-            try {
-                const docRef = doc(firestore, 'points', userId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    document.getElementById('points-display').innerText = `Total des points : ${docSnap.data().totalPoints || 0}`;
-                } else {
-                    document.getElementById('points-display').innerText = `Total des points : 0`;
+        function calculateTotalPoints(activities) {
+            let totalPoints = 0;
+            activities.forEach((activity) => {
+                if (activity.type === 'hours') {
+                    totalPoints += activity.points;
+                } else if (activity.type === 'checkbox') {
+                    totalPoints += activity.points; // Assuming points are added for each checked case
                 }
-            } catch (error) {
-                console.error('Erreur de chargement des points:', error);
-            }
+            });
+            return totalPoints;
+        }
+
+        function updatePointsDisplay(userId) {
+            getDocs(query(collection(firestore, 'activities'), where('userId', '==', userId)))
+                .then((querySnapshot) => {
+                    let totalPoints = 0;
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        totalPoints += data.points; // Sum des points de chaque activité
+                    });
+                    document.getElementById('points-display').innerText = `Total des points : ${totalPoints}`;
+                })
+                .catch((error) => {
+                    console.error('Erreur de chargement des points:', error);
+                });
         }
 
         function checkAuthState() {
@@ -198,81 +219,49 @@
             });
         }
 
-        async function addActivity(userId, name, points, type) {
-            try {
-                await addDoc(collection(firestore, 'activities'), {
-                    userId,
-                    name,
-                    points,
-                    type,
-                    createdAt: new Date()
-                });
+        function addActivity(userId, name, points, type) {
+            addDoc(collection(firestore, 'activities'), {
+                userId,
+                name,
+                points,
+                type,
+                createdAt: new Date()
+            })
+            .then(() => {
                 alert('Activité ajoutée !');
                 loadActivities(userId);
-                calculateAndSavePoints(userId); // Recalculer les points après ajout d'activité
-            } catch (error) {
+                updatePointsDisplay(userId); // Mettre à jour l'affichage des points après ajout d'activité
+            })
+            .catch((error) => {
                 console.error('Erreur d\'ajout d\'activité:', error);
                 alert('Erreur d\'ajout d\'activité : ' + error.message);
-            }
-        }
-
-        async function loadActivities(userId) {
-            const activitiesContainer = document.getElementById('activities');
-            activitiesContainer.innerHTML = '';
-            const q = query(collection(firestore, 'activities'), where('userId', '==', userId));
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const activityElement = document.createElement('div');
-                activityElement.className = 'activity-item';
-                activityElement.innerHTML = `
-                    <div class="activity-form" data-id="${doc.id}">
-                        <strong>${data.name}</strong><br>
-                        <div class="hours-only">
-                            <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
-                        </div>
-                        <div class="checkbox-only">
-                            <label>
-                                <input type="checkbox" class="checkbox-input">
-                                Points par case cochée
-                            </label>
-                        </div>
-                    </div>
-                `;
-                const type = data.type;
-                const hoursOnly = activityElement.querySelector('.hours-only');
-                const checkboxOnly = activityElement.querySelector('.checkbox-only');
-                if (type === 'hours') {
-                    hoursOnly.style.display = 'block';
-                    checkboxOnly.style.display = 'none';
-                } else {
-                    hoursOnly.style.display = 'none';
-                    checkboxOnly.style.display = 'block';
-                }
-                activitiesContainer.appendChild(activityElement);
             });
         }
 
-        async function calculateAndSavePoints(userId) {
-            let totalPoints = 0;
-            const activityForms = document.querySelectorAll('.activity-form');
-            for (let form of activityForms) {
-                const hoursInput = form.querySelector('.hours-input');
-                const checkboxInput = form.querySelector('.checkbox-input');
-                if (hoursInput && hoursInput.value) {
-                    totalPoints += parseFloat(hoursInput.value) * 10; // Points par heure
-                }
-                if (checkboxInput && checkboxInput.checked) {
-                    totalPoints += 10; // Points par case cochée
-                }
-            }
-            try {
-                await setDoc(doc(firestore, 'points', userId), { totalPoints }, { merge: true });
-                updatePointsDisplay(userId);
-            } catch (error) {
-                console.error('Erreur de mise à jour des points:', error);
-                alert('Erreur de mise à jour des points : ' + error.message);
-            }
+        function loadActivities(userId) {
+            const activitiesContainer = document.getElementById('activities');
+            activitiesContainer.innerHTML = '';
+            getDocs(query(collection(firestore, 'activities'), where('userId', '==', userId)))
+                .then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const activityElement = document.createElement('div');
+                        activityElement.className = 'activity-item';
+                        activityElement.innerHTML = `
+                            <div>
+                                <strong>${data.name}</strong><br>
+                                <div class="activity-details">
+                                    Type: ${data.type}<br>
+                                    Points: ${data.points}
+                                </div>
+                            </div>
+                        `;
+                        activitiesContainer.appendChild(activityElement);
+                    });
+                })
+                .catch((error) => {
+                    console.error('Erreur de chargement des activités:', error);
+                });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -313,11 +302,6 @@
                 const type = document.querySelector('input[name="activityType"]:checked').value;
                 const userId = auth.currentUser.uid;
                 addActivity(userId, name, points, type);
-            });
-
-            document.getElementById('calculatePointsBtn').addEventListener('click', () => {
-                const userId = auth.currentUser.uid;
-                calculateAndSavePoints(userId);
             });
 
             checkAuthState();
@@ -382,7 +366,6 @@
             </form>
             <h2>Activités</h2>
             <div id="activities"></div>
-            <button id="calculatePointsBtn">Calculer les points</button>
         </div>
     </section>
 </body>
