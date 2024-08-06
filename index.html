@@ -154,17 +154,16 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-       // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
-  authDomain: "last-9aee8.firebaseapp.com",
-  databaseURL: "https://last-9aee8-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "last-9aee8",
-  storageBucket: "last-9aee8.appspot.com",
-  messagingSenderId: "543978749666",
-  appId: "1:543978749666:web:0587a84de496dd7073a8bb",
-  measurementId: "G-SCY61WX3QH"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
+            authDomain: "last-9aee8.firebaseapp.com",
+            databaseURL: "https://last-9aee8-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "last-9aee8",
+            storageBucket: "last-9aee8.appspot.com",
+            messagingSenderId: "543978749666",
+            appId: "1:543978749666:web:0587a84de496dd7073a8bb",
+            measurementId: "G-SCY61WX3QH"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -175,9 +174,9 @@ const firebaseConfig = {
                 const docRef = doc(firestore, 'points', userId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    document.getElementById('points-display').innerText = Total des points : ${docSnap.data().totalPoints || 0};
+                    document.getElementById('points-display').innerText = `Total des points : ${docSnap.data().totalPoints || 0}`;
                 } else {
-                    document.getElementById('points-display').innerText = Total des points : 0;
+                    document.getElementById('points-display').innerText = `Total des points : 0`;
                 }
             } catch (error) {
                 console.error('Erreur de chargement des points:', error);
@@ -189,7 +188,7 @@ const firebaseConfig = {
                 if (user) {
                     document.getElementById('auth-section').style.display = 'none';
                     document.getElementById('profile-section').style.display = 'block';
-                    document.getElementById('username').innerText = Bonjour, ${user.email};
+                    document.getElementById('username').innerText = `Bonjour, ${user.email}`;
                     loadActivities(user.uid);
                     updatePointsDisplay(user.uid);
                 } else {
@@ -225,7 +224,7 @@ const firebaseConfig = {
                 const data = doc.data();
                 const activityElement = document.createElement('div');
                 activityElement.className = 'activity-item';
-                activityElement.innerHTML = 
+                activityElement.innerHTML = `
                     <div class="activity-form" data-id="${doc.id}">
                         <strong>${data.name}</strong><br>
                         <div class="hours-only">
@@ -238,7 +237,7 @@ const firebaseConfig = {
                             </label>
                         </div>
                     </div>
-                ;
+                `;
                 const type = data.type;
                 const hoursOnly = activityElement.querySelector('.hours-only');
                 const checkboxOnly = activityElement.querySelector('.checkbox-only');
