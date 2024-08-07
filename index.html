@@ -95,19 +95,6 @@
             margin-bottom: 10px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            position: relative;
-        }
-        .activity-form .delete-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 18px;
-            color: #ccc;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        .activity-form .delete-btn:hover {
-            color: #e00;
         }
         .hours-only, .checkbox-only {
             margin-top: 10px;
@@ -116,7 +103,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAJapQ7Y2iwW49alBkG3UsKl8Lq4D8mWwU",
@@ -181,9 +168,7 @@
                 activityElement.setAttribute('data-id', doc.id);
                 activityElement.innerHTML = `
                     <div>
-                        <strong>${data.name}</strong>
-                        <span class="delete-btn" onclick="deleteActivity('${doc.id}', '${data.name}')">&times;</span>
-                        <br>
+                        <strong>${data.name}</strong><br>
                         <div class="hours-only" style="display: ${data.type === 'hours' ? 'block' : 'none'};">
                             <input type="number" class="hours-input" placeholder="Nombre d'heures" min="0" step="0.1">
                         </div>
@@ -197,22 +182,6 @@
                 `;
                 activitiesContainer.appendChild(activityElement);
             });
-        }
-
-        async function deleteActivity(activityId, activityName) {
-            if (confirm(`Êtes-vous sûr de vouloir supprimer "${activityName}" ?`)) {
-                try {
-                    await deleteDoc(doc(firestore, 'activities', activityId));
-                    alert('Activité supprimée !');
-                    const user = auth.currentUser;
-                    if (user) {
-                        loadActivities(user.uid);
-                    }
-                } catch (error) {
-                    console.error('Erreur de suppression d\'activité:', error);
-                    alert('Erreur de suppression d\'activité : ' + error.message);
-                }
-            }
         }
 
         async function updatePoints(userId) {
@@ -237,11 +206,10 @@
             let dailyPoints = 0;
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                dailyPoints = (data.dailyPoints || 0) + newPoints;
+                dailyPoints = newPoints;
                 await updateDoc(docRef, { dailyPoints });
             } else {
-                dailyPoints = newPoints;
-                await setDoc(docRef, { dailyPoints }, { merge: true });
+                await setDoc(docRef, { dailyPoints: newPoints }, { merge: true });
             }
             document.getElementById('dailyPoints').innerText = dailyPoints;
         }
